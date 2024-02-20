@@ -1,4 +1,4 @@
-package com.ecommerce.api.Auth;
+package com.ecommerce.api.JWTAuthentication.Auth;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

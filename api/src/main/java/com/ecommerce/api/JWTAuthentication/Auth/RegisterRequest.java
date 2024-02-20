@@ -1,4 +1,4 @@
-package com.ecommerce.api.Auth;
+package com.ecommerce.api.JWTAuthentication.Auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,8 +9,11 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+public class RegisterRequest {
 
-public class AuthenticationRequest {
     private String username;
     private String password;
+    private String name;
+     
+    
 }

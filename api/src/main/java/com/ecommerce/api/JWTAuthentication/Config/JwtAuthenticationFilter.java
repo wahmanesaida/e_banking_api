@@ -1,4 +1,4 @@
-package com.ecommerce.api.Config;
+package com.ecommerce.api.JWTAuthentication.Config;
 
 import java.io.IOException;
 
