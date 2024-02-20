@@ -1,0 +1,24 @@
+package com.ecommerce.api.TransferMoney.dto;
+
+import com.ecommerce.api.Entity.TypeOfFees;
+import com.ecommerce.api.Entity.Type_transfer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class TransfertDto {
+    private BigDecimal amount_entred;
+    private BigDecimal amount_transfer;
+    private boolean notification;
+    private String generateRef;
+    private TypeOfFees fees;
+    private BigDecimal amount_total;
+    private Type_transfer typeOftransfer;
+}

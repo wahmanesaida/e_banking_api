@@ -1,4 +1,4 @@
-package com.ecommerce.api.Auth;
+package com.ecommerce.api.JWTAuthentication.Auth;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.ecommerce.api.Config.JwtService;
+import com.ecommerce.api.JWTAuthentication.Config.JwtService;
 import com.ecommerce.api.Entity.Role;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Repository.UserRepository;

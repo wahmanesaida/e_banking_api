@@ -1,4 +1,4 @@
-package com.ecommerce.api.Auth;
+package com.ecommerce.api.JWTAuthentication.Auth;
 
 import com.ecommerce.api.Entity.Role;
 

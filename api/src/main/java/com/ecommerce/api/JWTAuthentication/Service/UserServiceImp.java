@@ -1,4 +1,4 @@
-package com.ecommerce.api.Service;
+package com.ecommerce.api.JWTAuthentication.Service;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -34,11 +34,11 @@ public class UserServiceImp implements UserService {
        return userRepo.findByUsername(username);
     }
 
-    @Transactional
-    @Override
-    public void MakeAdmin(String username) {
-         userRepo.UpdateUserRole(username, Role.ADMIN);
-         //username is email 
-    }
+//    @Transactional
+//    @Override
+//    public void MakeAdmin(String username) {
+//         userRepo.UpdateUserRole(username, Role.ADMIN);
+//         //username is email
+//    }
     
 }
