@@ -1,7 +1,18 @@
 package com.ecommerce.api.TransferMoney.service;
 
-import com.ecommerce.api.TransferMoney.dto.EmailDetails;
+import org.springframework.http.ResponseEntity;
+
+import com.ecommerce.api.TransferMoney.dto.MailStructure;
 
 public interface EmailService {
-    void SendEmailAlert(EmailDetails emailDetails);
+    String generateOTP();
+
+    void sendMail(MailStructure mailStructure);
+
+    void sendOtpEmail(String toEmail, String otp);
+
+    ResponseEntity<String> sendOTP(String email);
+
+    ResponseEntity<String> validateOTP(String email, String otp);
+
 }
