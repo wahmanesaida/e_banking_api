@@ -15,10 +15,6 @@ public interface TransferService {
 
     User showKyc(String phone);
 
-    String getOtpFromUser(String email);
-
-    String getEmailForClient(long client_id);
-
     Beneficiary transferMoney(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene);
 
     String generateTransferReference();
@@ -34,5 +30,9 @@ public interface TransferService {
     void processTransaction(User user);
 
     String checkAmountOfTransfert(TransfertDto transfertDto, User user, BigDecimal checkamount);
+
+    String getOtpFromUser(String email);
+
+    String getEmailForClient(long client_id);
 
 }

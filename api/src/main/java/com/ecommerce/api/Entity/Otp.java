@@ -21,12 +21,12 @@ public class Otp {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String email;
+    private String username;
 
     private String otp;
 
     public Otp(String mail, String otp){
-        this.email = mail;
+        this.username = mail;
         this.otp = otp;
 
     }
