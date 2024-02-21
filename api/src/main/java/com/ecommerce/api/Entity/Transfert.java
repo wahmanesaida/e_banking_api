@@ -37,6 +37,8 @@ public class Transfert {
     @Column(name = "status")
     private String status;
 
+    private boolean notification;
+
     @CreationTimestamp
     @Column(name = "createTime")
     private LocalDateTime createTime;
@@ -44,5 +46,14 @@ public class Transfert {
     @ManyToOne
     @JoinColumn(name = "ClientId")
     private User client;
+
+    @ManyToOne
+    @JoinColumn(name = "beneficiairy_id")
+    private Beneficiary beneficiary;  
+
+
+    @OneToOne(mappedBy = "transfert")
+    @JoinColumn(name = "transfert_id")
+    private Transaction transaction;
 
 }

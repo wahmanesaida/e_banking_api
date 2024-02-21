@@ -5,13 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Builder
-public class EmailDetails {
+public class MailStructure {
     private String recipient;
-    private  String message;
-    private  String subject;
-    private String attachment;
+    private String subject;
+    private String message;
+
 }
