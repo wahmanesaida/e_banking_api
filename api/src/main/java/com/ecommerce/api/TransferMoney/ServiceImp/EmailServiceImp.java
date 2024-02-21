@@ -83,7 +83,7 @@ public class EmailServiceImp implements EmailService {
 
     @Override
     public ResponseEntity<String> validateOTP(String email, String otp) {
-        Optional<Otp> otpEntityOptional = otpRepository.findByEmail(email);
+        Optional<Otp> otpEntityOptional = otpRepository.findByUsername(email);
         if (otpEntityOptional.isPresent()) {
             Otp otpEntity = otpEntityOptional.get();
             if (otpEntity.getOtp().equals(otp)) {

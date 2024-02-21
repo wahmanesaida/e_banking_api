@@ -37,8 +37,6 @@ public class Transfert {
     @Column(name = "status")
     private String status;
 
-    private boolean notification;
-
     @CreationTimestamp
     @Column(name = "createTime")
     private LocalDateTime createTime;

@@ -103,29 +103,23 @@ public class TransferServiceImp implements TransferService {
     @Override
     public String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene) {
 
-        // Send OTP
-        String email = getEmailForClient(client_id);
-        ResponseEntity<String> sendOtpResponse = emailService.sendOTP(email);
-        if (!sendOtpResponse.getStatusCode().is2xxSuccessful()) {
-            return "Failed to send OTP, Transfer cannot be completed !!";
-        }
-
         if (transfertDto.getTypeOftransfer() == Type_transfer.ACCOUNT_DEBIT) {
+
+            // Send OTP
+            String email = getEmailForClient(client_id);
+            ResponseEntity<String> sendOtpResponse = emailService.sendOTP(email);
+            if (!sendOtpResponse.getStatusCode().is2xxSuccessful()) {
+                return "Failed to send OTP, Transfer cannot be completed !!";
+            }
 
             Optional<User> userOptional = userRepo.findById(client_id);
             Beneficiary beneficiary;
 
             // Verify OTP before completing the transfer
-            String otp = getOtpFromUser(email); 
+            String otp = getOtpFromUser(email);
             ResponseEntity<String> otpValidationResponse = emailService.validateOTP(email, otp);
 
-          /*   if (otpValidationResponse.getStatusCode().is2xxSuccessful()) {
-                // Proceed with the transfer if OTP is valid
-               
-            
-                return "Congratulations, your transaction has been successful with a good amount " + transfertDto.getAmount_transfer();
-            }
- */
+
             ExpenseManagement(transfertDto);
             if (userOptional.isPresent()) {
                 User user = userOptional.get();
@@ -155,19 +149,28 @@ public class TransferServiceImp implements TransferService {
 
                 }
 
-                Transfert transfert = new Transfert();
-                transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                transfert.setType_transfer(transfertDto.getTypeOftransfer());
-                transfert.setTypeOfFees(transfertDto.getFees());
-                transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
-                transfert.setStatus("A servir");
-                transfert.setClient(user);
-                transfertRepository.save(transfert);
+                   if (otpValidationResponse.getStatusCode().is2xxSuccessful()) {
 
-                processTransaction(user);
+                       Transfert transfert = new Transfert();
+                       transfert.setAmount_transfer(transfertDto.getAmount_transfer());
+                       transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                       transfert.setTypeOfFees(transfertDto.getFees());
+                       transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
+                       transfert.setStatus("A servir");
+                       transfert.setClient(user);
+                       transfertRepository.save(transfert);
 
-                return " congratulations, your transaction has been successful with a good amount   "
-                        + transfertDto.getAmount_transfer();
+                       processTransaction(user);
+
+                       return " congratulations, your transaction has been successful with a good amount   "
+                               + transfertDto.getAmount_transfer();
+
+
+            }
+                   else{
+                       return "failed process";
+
+                   }
 
             }
             return "user not found !";
@@ -180,7 +183,7 @@ public class TransferServiceImp implements TransferService {
 
     @Override
     public String getOtpFromUser(String email) {
-        Optional<Otp> otpEntityOptional = otpRepository.findByEmail(email);
+        Optional<Otp> otpEntityOptional = otpRepository.findByUsername(email);
         if (otpEntityOptional.isPresent()) {
             return otpEntityOptional.get().getOtp();
         }
