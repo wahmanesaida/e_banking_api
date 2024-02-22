@@ -7,6 +7,9 @@ import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import com.ecommerce.api.TransferMoney.service.TransferService;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,9 +45,9 @@ public class modifyUser {
 
 
     @PostMapping("/transfert/{id}")
-    public ResponseEntity<?>transfertController(@RequestBody TransferRequest request, @PathVariable long id){
+    public ResponseEntity<?>transfertController(@RequestBody TransferRequest request, @PathVariable long id, HttpServletResponse response){
         try{
-            String rp=transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(), request.getBene());
+            String rp=transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(), request.getBene(), response);
             return ResponseEntity.status(HttpStatus.OK).body(rp);
             
         }catch (IllegalArgumentException e){

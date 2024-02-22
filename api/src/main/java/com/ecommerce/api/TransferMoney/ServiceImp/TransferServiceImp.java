@@ -8,13 +8,19 @@ import com.ecommerce.api.Repository.UserRepository;
 import com.ecommerce.api.Entity.*;
 import com.ecommerce.api.TransferMoney.dto.*;
 import com.ecommerce.api.TransferMoney.service.EmailService;
+import com.ecommerce.api.TransferMoney.service.PdfGeneratorService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import com.ecommerce.api.TransferMoney.utils.TransferUtils;
+import com.lowagie.text.DocumentException;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.Optional;
@@ -37,6 +43,9 @@ public class TransferServiceImp implements TransferService {
 
     @Autowired
     EmailService emailService;
+
+    @Autowired
+    PdfGeneratorService pdfGeneratorService;
 
     @Autowired
     ProspectsRepository prospectsRepository;
@@ -95,13 +104,9 @@ public class TransferServiceImp implements TransferService {
         return userRepo.findUserByPhoneNumber(phone).get();
     }
 
-    @Override
-    public Beneficiary transferMoney(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene) {
-        return null;
-    }
 
     @Override
-    public String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene) {
+    public String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene, HttpServletResponse response) {
 
         if (transfertDto.getTypeOftransfer() == Type_transfer.ACCOUNT_DEBIT) {
 
@@ -118,7 +123,6 @@ public class TransferServiceImp implements TransferService {
             // Verify OTP before completing the transfer
             String otp = getOtpFromUser(email);
             ResponseEntity<String> otpValidationResponse = emailService.validateOTP(email, otp);
-
 
             ExpenseManagement(transfertDto);
             if (userOptional.isPresent()) {
@@ -137,40 +141,44 @@ public class TransferServiceImp implements TransferService {
                 if (transfertDto.isNotification()) {
                     emailService.sendMail(
                             MailStructure.builder()
-                                    .subject("Your account is credited")
+                                    .subject("Transfer Confirmation")
                                     .recipient(beneficiary.getUsername())
                                     .message(beneficiary.getFirstName() + " " + "you received money from " + " "
                                             + user.getUsername() + " \n" + "your transfer reference : " + "  "
-                                            + transfertDto.getGenerateRef() + " \n" + " "
+                                            + transfertDto.getGenerateRef() + " \n" + ""
                                             + "don't share this with anyone!"
-                                            + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
-                                            + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                            + "\n" + "" + "your total amount is: " + transfertDto.getAmount_total()
+                                            + "\n" + "your transfer amount: " + transfertDto.getAmount_transfer())
                                     .build());
 
                 }
 
-                   if (otpValidationResponse.getStatusCode().is2xxSuccessful()) {
+                if (otpValidationResponse.getStatusCode().is2xxSuccessful()) {
 
-                       Transfert transfert = new Transfert();
-                       transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                       transfert.setType_transfer(transfertDto.getTypeOftransfer());
-                       transfert.setTypeOfFees(transfertDto.getFees());
-                       transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
-                       transfert.setStatus("A servir");
-                       transfert.setClient(user);
-                       transfertRepository.save(transfert);
+                    try {
+                        pdfGeneratorService.export(response,transfertDto, client_id, bene_id, bene);
+                    } catch (IOException | DocumentException e) {
+                        return "Failed to generate PDF receipt";
+                    }
 
-                       processTransaction(user);
+                    Transfert transfert = new Transfert();
+                    transfert.setAmount_transfer(transfertDto.getAmount_transfer());
+                    transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                    transfert.setTypeOfFees(transfertDto.getFees());
+                    transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
+                    transfert.setStatus("A servir");
+                    transfert.setClient(user);
+                    transfertRepository.save(transfert);
 
-                       return " congratulations, your transaction has been successful with a good amount   "
-                               + transfertDto.getAmount_transfer();
+                    processTransaction(user);
 
+                    return " congratulations, your transaction has been successful with a good amount   "
+                            + transfertDto.getAmount_transfer();
 
-            }
-                   else{
-                       return "failed process";
+                } else {
+                    return "failed process";
 
-                   }
+                }
 
             }
             return "user not found !";
@@ -187,7 +195,7 @@ public class TransferServiceImp implements TransferService {
         if (otpEntityOptional.isPresent()) {
             return otpEntityOptional.get().getOtp();
         }
-        return null; 
+        return null;
     }
 
     @Override
