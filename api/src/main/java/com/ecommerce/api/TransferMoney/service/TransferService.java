@@ -5,6 +5,9 @@ import com.ecommerce.api.Entity.Beneficiary;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
+
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,13 +18,11 @@ public interface TransferService {
 
     User showKyc(String phone);
 
-    Beneficiary transferMoney(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene);
-
     String generateTransferReference();
 
     Beneficiary selectOrAddBeneficiary(long id_user, long id_beneficiary, BeneficiaryDto beneficiary);
 
-    String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene);
+    String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene, HttpServletResponse response);
 
     void ExpenseManagement(TransfertDto transfertDto);
 

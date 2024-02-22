@@ -1,9 +1,12 @@
 package com.ecommerce.api.TransferMoney.service;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 
+
+@Service
 public interface EmailService {
     String generateOTP();
 

@@ -8,12 +8,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
 public class TransfertDto {
+    private Long id;
     private BigDecimal amount_entred;
     private BigDecimal amount_transfer;
     private boolean notification;
@@ -21,4 +23,6 @@ public class TransfertDto {
     private TypeOfFees fees;
     private BigDecimal amount_total;
     private Type_transfer typeOftransfer;
+    private String status;
+    private LocalDateTime createTime;
 }
