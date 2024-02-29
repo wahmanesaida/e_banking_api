@@ -2,6 +2,7 @@ package com.ecommerce.api.TransferMoney.service;
 
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Entity.Beneficiary;
+import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
@@ -18,11 +19,12 @@ public interface TransferService {
 
     User showKyc(String phone);
 
+
     String generateTransferReference();
 
     Beneficiary selectOrAddBeneficiary(long id_user, long id_beneficiary, BeneficiaryDto beneficiary);
 
-    String trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene, HttpServletResponse response);
+    MessageResponse trs(TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene);
 
     void ExpenseManagement(TransfertDto transfertDto);
 
@@ -30,7 +32,7 @@ public interface TransferService {
 
     void processTransaction(User user);
 
-    String checkAmountOfTransfert(TransfertDto transfertDto, User user, BigDecimal checkamount);
+    MessageResponse checkAmountOfTransfert(TransfertDto transfertDto, User user, BigDecimal checkamount);
 
     String getOtpFromUser(String email);
 

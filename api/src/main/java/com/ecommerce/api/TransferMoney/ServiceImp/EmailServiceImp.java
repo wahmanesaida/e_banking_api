@@ -2,6 +2,7 @@ package com.ecommerce.api.TransferMoney.ServiceImp;
 
 import com.ecommerce.api.Entity.Otp;
 import com.ecommerce.api.Repository.OtpRepository;
+import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 
@@ -22,12 +23,12 @@ public class EmailServiceImp implements EmailService {
     private JavaMailSender mailSender;
 
     @Autowired
-    private OtpRepository otpRepository; 
+    private OtpRepository otpRepository;
 
     @Value("${spring.mail.username}")
     private String fromMail;
 
-    
+
 
     @Override
     public void sendMail(MailStructure mailStructure) {
@@ -72,28 +73,30 @@ public class EmailServiceImp implements EmailService {
     }
 
     @Override
-     public ResponseEntity<String> sendOTP(String email) {
+    public MessageResponse sendOTP(String email) {
         String otp = generateOTP();
         sendOtpEmail(email, otp);
         Otp otpEntity = new Otp(email, otp);
         otpRepository.save(otpEntity); // Save OTP to the database
-        return ResponseEntity.ok("OTP sent successfully");
+        return new MessageResponse("OTP sent successfully");
     }
 
 
     @Override
-    public ResponseEntity<String> validateOTP(String email, String otp) {
+    public MessageResponse validateOTP(String email, String otp) {
         Optional<Otp> otpEntityOptional = otpRepository.findByUsername(email);
         if (otpEntityOptional.isPresent()) {
             Otp otpEntity = otpEntityOptional.get();
-            if (otpEntity.getOtp().equals(otp)) {
-                otpRepository.delete(otpEntity); // Delete OTP from the database
-                return ResponseEntity.ok("OTP is valid");
+            if (otpEntity.getOtp().compareTo(otp)== 0) {
+                otpRepository.delete(otpEntity); // Delete OTP from the database//
+                return new MessageResponse("OTP is valid");
             }
         }
-        return ResponseEntity.badRequest().body("Invalid OTP");
+        return new MessageResponse("Invalid OTP");
     }
 
 
-   
+
+
+
 }

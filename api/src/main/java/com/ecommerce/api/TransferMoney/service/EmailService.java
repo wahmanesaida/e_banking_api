@@ -1,5 +1,6 @@
 package com.ecommerce.api.TransferMoney.service;
 
+import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,8 +15,8 @@ public interface EmailService {
 
     void sendOtpEmail(String toEmail, String otp);
 
-    ResponseEntity<String> sendOTP(String email);
+    MessageResponse sendOTP(String email);
 
-    ResponseEntity<String> validateOTP(String email, String otp);
+    MessageResponse validateOTP(String email, String otp);
 
 }
