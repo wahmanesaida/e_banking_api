@@ -1,25 +1,33 @@
 package com.ecommerce.api.TransferMoney.Controller;
 
 import com.ecommerce.api.Entity.Beneficiary;
+import com.ecommerce.api.Entity.Otp;
 import com.ecommerce.api.Entity.User;
+import com.ecommerce.api.Repository.OtpRepository;
 import com.ecommerce.api.TransferMoney.Response.BeneficiaryResponseDTO;
+import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
+import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
-
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/v1/auth/")
 public class modifyUser {
     @Autowired
     private TransferService transferService;
+    @Autowired
+    private EmailService emailService;
+
+
 
     @PostMapping("/modify/{username}")
     public ResponseEntity<String> modifykyc(@PathVariable String username, @RequestBody Kyc kyc) {
@@ -45,13 +53,13 @@ public class modifyUser {
 
 
     @PostMapping("/transfert/{id}")
-    public ResponseEntity<?>transfertController(@RequestBody TransferRequest request, @PathVariable long id, HttpServletResponse response){
+    public ResponseEntity<MessageResponse>transfertController(@RequestBody TransferRequest request, @PathVariable long id){
         try{
-            String rp=transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(), request.getBene(), response);
+            MessageResponse rp=transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(), request.getBene());
             return ResponseEntity.status(HttpStatus.OK).body(rp);
-            
+
         }catch (IllegalArgumentException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( new MessageResponse("error"));
 
         }
     }
@@ -94,6 +102,11 @@ public class modifyUser {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
         }
     }
+
+
+
+
+
 
 
 
