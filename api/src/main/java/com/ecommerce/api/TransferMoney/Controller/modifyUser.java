@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -27,8 +28,6 @@ public class modifyUser {
     @Autowired
     private EmailService emailService;
 
-
-
     @PostMapping("/modify/{username}")
     public ResponseEntity<String> modifykyc(@PathVariable String username, @RequestBody Kyc kyc) {
         try {
@@ -36,34 +35,34 @@ public class modifyUser {
             return new ResponseEntity<>("KYC information modified successfully", HttpStatus.OK);
 
         } catch (Exception e) {
-            return new ResponseEntity<>("Failed to modify KYC information: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Failed to modify KYC information: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("showkyc/{phone}")
-    public ResponseEntity<User> showkyc(@PathVariable String phone){
+    public ResponseEntity<User> showkyc(@PathVariable String phone) {
         try {
             transferService.showKyc(phone);
             return new ResponseEntity<>(transferService.showKyc(phone), HttpStatus.OK);
-        }catch (Exception e) {
-            return  new ResponseEntity<>(transferService.showKyc(phone) , HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            return new ResponseEntity<>(transferService.showKyc(phone), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
     @PostMapping("/transfert/{id}")
-    public ResponseEntity<MessageResponse>transfertController(@RequestBody TransferRequest request, @PathVariable long id){
-        try{
-            MessageResponse rp=transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(), request.getBene());
+    public ResponseEntity<MessageResponse> transfertController(@RequestBody TransferRequest request,
+            @PathVariable long id) {
+        try {
+            MessageResponse rp = transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(),
+                    request.getBene());
             return ResponseEntity.status(HttpStatus.OK).body(rp);
 
-        }catch (IllegalArgumentException e){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body( new MessageResponse("error"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("error"));
 
         }
     }
-
 
     @PostMapping("/add/{id_user}/{id_beneficiary}")
     public ResponseEntity<?> addBeneficiary(
@@ -71,7 +70,8 @@ public class modifyUser {
             @PathVariable long id_user,
             @PathVariable long id_beneficiary) {
         try {
-            Beneficiary addedBeneficiary = transferService.selectOrAddBeneficiary(id_user, id_beneficiary, beneficiaryDto);
+            Beneficiary addedBeneficiary = transferService.selectOrAddBeneficiary(id_user, id_beneficiary,
+                    beneficiaryDto);
             if (addedBeneficiary != null) {
                 BeneficiaryResponseDTO responseDTO = new BeneficiaryResponseDTO(
                         addedBeneficiary.getId(),
@@ -79,7 +79,7 @@ public class modifyUser {
                         addedBeneficiary.getLastname(),
                         addedBeneficiary.getUsername(),
                         addedBeneficiary.getGSM()
-                        // Include other fields as needed
+                // Include other fields as needed
                 );
                 return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
             } else {
@@ -92,23 +92,21 @@ public class modifyUser {
         }
     }
 
-
     @GetMapping("/generateReference")
-    public ResponseEntity<String> generateReference(){
+    public ResponseEntity<String> generateReference() {
         try {
-            String reff=transferService.generateTransferReference();
+            String reff = transferService.generateTransferReference();
             return ResponseEntity.status(HttpStatus.OK).body(reff);
-        }catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error");
         }
     }
 
-
-
-
-
-
-
-
+    @PostMapping("/check-amount")
+    public ResponseEntity<MessageResponse> checkAmountOfTransfer(@RequestBody CheckAmountRequest checkAmountRequest) {
+        checkAmountRequest.checkAmount = checkAmountRequest.transfertDto.getAmount_transfer().divide(new BigDecimal(100));                  
+        MessageResponse result = transferService.checkAmountOfTransfert(checkAmountRequest.transfertDto, checkAmountRequest.user, checkAmountRequest.checkAmount);
+        return ResponseEntity.ok(result);
+    }
 
 }

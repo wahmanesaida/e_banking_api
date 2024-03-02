@@ -12,7 +12,6 @@ import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import com.ecommerce.api.TransferMoney.utils.TransferUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +80,21 @@ public class TransferServiceImp implements TransferService {
             if (kyc.getAccount_amount() != null) {
                 existingUser.setAccount_amount(kyc.getAccount_amount());
             }
-
+            if (kyc.getExpirationPieceIdentite() != null) {
+                existingUser.setExpirationPieceIdentite(kyc.getExpirationPieceIdentite());
+            }
+            if (kyc.getDatenaissance() != null) {
+                existingUser.setDatenaissance(kyc.getDatenaissance());
+            }
+            if (kyc.getValiditePieceIdentite() != null) {
+                existingUser.setValiditePieceIdentite(kyc.getValiditePieceIdentite());
+            }
+            if (kyc.getPayeNationale() != null) {
+                existingUser.setPayeNationale(kyc.getPayeNationale());
+            }
+            if (kyc.getPaysEmission() != null) {
+                existingUser.setPaysEmission(kyc.getPaysEmission());
+            }
             userRepo.save(existingUser);
         } else {
             // Handle the case where the user with the specified username does not exist
