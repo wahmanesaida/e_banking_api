@@ -6,6 +6,7 @@ import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,8 +29,6 @@ public class EmailServiceImp implements EmailService {
 
     @Value("${spring.mail.username}")
     private String fromMail;
-
-
 
     @Override
     public void sendMail(MailStructure mailStructure) {
@@ -61,7 +61,6 @@ public class EmailServiceImp implements EmailService {
         return new String(otp);
     }
 
-
     @Override
     public void sendOtpEmail(String toEmail, String otp) {
         SimpleMailMessage message = new SimpleMailMessage();
@@ -74,6 +73,12 @@ public class EmailServiceImp implements EmailService {
 
     @Override
     public MessageResponse sendOTP(String email) {
+        Optional<Otp> existingOtp = otpRepository.findByUsername(email);
+        if (existingOtp.isPresent()) {
+            // Email already has an OTP, do not send a new one
+            return new MessageResponse("OTP already sent for this email");
+        }
+
         String otp = generateOTP();
         sendOtpEmail(email, otp);
         Otp otpEntity = new Otp(email, otp);
@@ -81,22 +86,17 @@ public class EmailServiceImp implements EmailService {
         return new MessageResponse("OTP sent successfully");
     }
 
-
     @Override
     public MessageResponse validateOTP(String email, String otp) {
         Optional<Otp> otpEntityOptional = otpRepository.findByUsername(email);
         if (otpEntityOptional.isPresent()) {
             Otp otpEntity = otpEntityOptional.get();
-            if (otpEntity.getOtp().compareTo(otp)== 0) {
+            if (otpEntity.getOtp().compareTo(otp) == 0) {
                 otpRepository.delete(otpEntity); // Delete OTP from the database//
                 return new MessageResponse("OTP is valid");
             }
         }
         return new MessageResponse("Invalid OTP");
     }
-
-
-
-
 
 }

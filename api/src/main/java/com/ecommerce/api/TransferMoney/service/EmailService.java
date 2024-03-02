@@ -15,6 +15,8 @@ public interface EmailService {
 
     void sendOtpEmail(String toEmail, String otp);
 
+   /*  void deleteExpiredOtpsScheduler(); */
+
     MessageResponse sendOTP(String email);
 
     MessageResponse validateOTP(String email, String otp);
