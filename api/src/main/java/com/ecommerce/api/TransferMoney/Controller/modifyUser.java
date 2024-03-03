@@ -14,8 +14,11 @@ import com.ecommerce.api.TransferMoney.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.util.Optional;
 
@@ -41,11 +44,15 @@ public class modifyUser {
     }
 
     @GetMapping("showkyc/{phone}")
-    public ResponseEntity<User> showkyc(@PathVariable String phone) {
+    public ResponseEntity<?> showkyc(@PathVariable @Pattern(regexp = "^\\+212\\d{9}$", message = "Invalid Moroccan phone number") String phone) {
         try {
-            transferService.showKyc(phone);
-            return new ResponseEntity<>(transferService.showKyc(phone), HttpStatus.OK);
-        } catch (Exception e) {
+           User user= transferService.showKyc(phone);
+
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }catch (ConstraintViolationException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception e) {
             return new ResponseEntity<>(transferService.showKyc(phone), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

@@ -16,6 +16,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.validation.constraints.Pattern;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -81,6 +83,8 @@ public class User implements UserDetails {
     private Ville ville;
 
     @Column(name = "GSM")
+
+    @Pattern(regexp = "^\\+212\\d{9}$", message = "Invalid Moroccan phone number")
     private String GSM;
 
     @Column(name = "account_amount")
