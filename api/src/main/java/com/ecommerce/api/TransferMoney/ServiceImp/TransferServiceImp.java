@@ -105,8 +105,14 @@ public class TransferServiceImp implements TransferService {
 
     @Override
     public User showKyc(String phone) {
+       Optional<User>  user =userRepo.findUserByPhoneNumber(phone);
+       if(user.isPresent()){
+           return user.get();
+       }
+       else {
+           return null;
+       }
 
-        return userRepo.findUserByPhoneNumber(phone).get();
     }
 
 
