@@ -127,7 +127,7 @@ public class TransferServiceImp implements TransferService {
         if (transfertDto.getTypeOftransfer() == Type_transfer.ACCOUNT_DEBIT) {
 
 
-
+            transfertDto.setId_bene(bene_id);
             Optional<User> userOptional = userRepo.findById(client_id);
             Beneficiary beneficiary;
 
@@ -177,9 +177,11 @@ public class TransferServiceImp implements TransferService {
                 transfert.setAmount_transfer(transfertDto.getAmount_transfer());
                 transfert.setType_transfer(transfertDto.getTypeOftransfer());
                 transfert.setTypeOfFees(transfertDto.getFees());
+                transfert.setTransferRef(transfertDto.getGenerateRef());
                 transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
                 transfert.setStatus("A servir");
                 transfert.setClient(user);
+                transfert.setBeneficiary(beneficiary);
                 transfertRepository.save(transfert);
 
                 processTransaction(user);

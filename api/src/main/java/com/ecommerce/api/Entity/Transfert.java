@@ -9,7 +9,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 @Data
 @Builder
 @AllArgsConstructor
@@ -40,6 +39,9 @@ public class Transfert {
     @CreationTimestamp
     @Column(name = "createTime")
     private LocalDateTime createTime;
+
+    @Column(name = "transferRef")
+    private String transferRef;
 
     @ManyToOne
     @JoinColumn(name = "ClientId")
