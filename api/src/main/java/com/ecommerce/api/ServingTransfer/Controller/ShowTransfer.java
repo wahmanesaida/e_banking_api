@@ -1,6 +1,7 @@
 package com.ecommerce.api.ServingTransfer.Controller;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,12 +39,20 @@ public class ShowTransfer {
     private UserRepository userRepo;
 
     @PostMapping("/showTransfer")
-    public ResponseEntity<Transfert> searchTransfer(@RequestBody TransferRefDTO transferRefDTO) {
-        Transfert transfert = servingTransfer.searchTransfer(transferRefDTO);
-        if (transfert != null) {
-            return ResponseEntity.ok(transfert);
-        } else {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<?> searchTransfer(@RequestBody TransferRefDTO transferRefDTO) {
+        try {
+            Transfert transfert = servingTransfer.searchTransfer(transferRefDTO);
+            if (transfert != null) {
+                return ResponseEntity.ok(transfert);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+            
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            
+        } catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
         }
     }
 
@@ -56,20 +65,28 @@ public class ShowTransfer {
     @PostMapping("/users")
     public ResponseEntity<User> createUser(@RequestBody User user) {
         // Encode the password
-    String encodedPassword = passwordEncoder.encode(user.getPassword());
-    // Set the encoded password back to the user object
-    user.setPassword(encodedPassword);
-    
-    // Save the user
-    User newUser = userRepo.save(user);
-    return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        // Set the encoded password back to the user object
+        user.setPassword(encodedPassword);
+
+        // Save the user
+        User newUser = userRepo.save(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PostMapping("/validateTransfer")
-    public ResponseEntity validatePayment(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws DocumentException, IOException{
-        servingTransfer.validatePayment(transferPaymentDto, response);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> validatePayment(@RequestBody TransferPaymentDto transferPaymentDto,
+            HttpServletResponse response) {
+        try {
+            servingTransfer.validatePayment(transferPaymentDto, response);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException | IllegalStateException ex) {
+            // Handle specific exceptions
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+        } catch (Exception ex) {
+            // Handle generic exceptions
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+        }
     }
 
-    
 }
