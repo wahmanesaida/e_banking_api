@@ -101,7 +101,8 @@ public class ServingTransferImpl implements ServingTransfer {
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-            if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
+           /*  if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) { */
+               if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
 
                 enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
 
@@ -126,46 +127,50 @@ public class ServingTransferImpl implements ServingTransfer {
                 transfertRepository.save(transfert);
                 generatePaymentReceipt(transferPaymentDto,response);
             } else {
-                throw new NoSuchElementException("Transfer is already paid or blocked: " + transferRef);
+                throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
 
-        }
-        else {
-            throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
-        }
+        /* else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
+            
+        } */
+        
+    }else {
+        throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
+    }
 
     }
 
     @Override
-    public void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws IOException, DocumentException {
+    public void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
+            throws IOException, DocumentException {
         Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdClient());
-        Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository.findById(transferPaymentDto.getBeneficiaryDto().getId());
-        Optional<Transfert> transferOptional= transfertRepository.findById(transferPaymentDto.getTransferRefDTO().getId());
-
+        Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository
+                .findById(transferPaymentDto.getBeneficiaryDto().getId());
+        Optional<Transfert> transferOptional = transfertRepository
+                .findById(transferPaymentDto.getTransferRefDTO().getId());
 
         User client = clientOptional.get();
         Beneficiary beneficiary = beneficiaryOptional.get();
         Transfert transfert = transferOptional.get();
-
 
         response.setContentType("application/pdf");
         DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String currentDateTime = dateFormatter.format(new Date());
 
         String headerKey = "Content-Disposition";
-        String headerValue = "attachment; filename=pdf_"+ currentDateTime +".pdf";
+        String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
-
-
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
 
         document.open();
 
-       /*  Image logo = Image.getInstance("");
-        logo.scaleToFit(100, 100); 
-        document.add(logo); */
+        /*
+         * Image logo = Image.getInstance("");
+         * logo.scaleToFit(100, 100);
+         * document.add(logo);
+         */
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
@@ -178,8 +183,8 @@ public class ServingTransferImpl implements ServingTransfer {
         Date date = new Date();
         String currentDate = dateFormat.format(date);
         PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle), document.right() - 10, document.bottom() + 10, 0);
-        
+        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
+                document.right() - 10, document.bottom() + 10, 0);
 
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
         font.setSize(12);
@@ -203,10 +208,8 @@ public class ServingTransferImpl implements ServingTransfer {
         addTableCell(table, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "State", transfert.getStatus(), font);
 
-
-
         addTableCell(table2, "Transfer ID", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Receiver", beneficiary.getFirstName()  + " " + beneficiary.getLastname(),
+        addTableCell(table2, "Receiver", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
                 font);
         addTableCell(table2, "Amount", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
@@ -216,8 +219,6 @@ public class ServingTransferImpl implements ServingTransfer {
         document.add(table2);
 
         document.close();
-
-
 
     }
 
