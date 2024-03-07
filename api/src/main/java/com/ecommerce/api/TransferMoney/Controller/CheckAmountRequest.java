@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CheckAmountRequest {
     TransfertDto transfertDto;
-    User user;
-    BigDecimal checkAmount;
+    long id;
+
 
 
 }

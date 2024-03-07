@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface BeneficiaryRepository extends JpaRepository<Beneficiary, Long> {
     Optional<Beneficiary> findBeneficiaryByUsername(String username);
+
 }
