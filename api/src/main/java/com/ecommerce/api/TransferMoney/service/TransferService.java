@@ -32,10 +32,12 @@ public interface TransferService {
 
     void processTransaction(User user);
 
-    MessageResponse checkAmountOfTransfert(TransfertDto transfertDto, User user, BigDecimal checkamount);
+    MessageResponse checkAmountOfTransfert(TransfertDto transfertDto, long client_id);
 
     String getOtpFromUser(String email);
 
     String getEmailForClient(long client_id);
+    Beneficiary SelectBene(long id_beneficiary);
+
 
 }

@@ -108,11 +108,24 @@ public class modifyUser {
 
     @PostMapping("/check-amount")
     public ResponseEntity<MessageResponse> checkAmountOfTransfer(@RequestBody CheckAmountRequest checkAmountRequest) {
-        checkAmountRequest.checkAmount = checkAmountRequest.transfertDto.getAmount_transfer()
-                .divide(new BigDecimal(100));
-        MessageResponse result = transferService.checkAmountOfTransfert(checkAmountRequest.transfertDto,
-                checkAmountRequest.user, checkAmountRequest.checkAmount);
-        return ResponseEntity.ok(result);
+        //checkAmountRequest.checkAmount = checkAmountRequest.transfertDto.getAmount_transfer().divide(new BigDecimal(100));
+        try{
+            MessageResponse result = transferService.checkAmountOfTransfert(checkAmountRequest.transfertDto, checkAmountRequest.id);
+            return ResponseEntity.ok(result);
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse("Internal server error"));
+        }
+
     }
 
+    @PostMapping("/selectbene/{id_beneficiary}")
+    public ResponseEntity<?> SelectBene(@PathVariable long id_beneficiary){
+        try {
+            Beneficiary beneee=transferService.SelectBene(id_beneficiary);
+            return new ResponseEntity<>(beneee, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(transferService.SelectBene(id_beneficiary), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
 }
