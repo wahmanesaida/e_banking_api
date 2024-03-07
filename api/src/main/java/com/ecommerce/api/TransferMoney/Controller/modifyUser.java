@@ -1,15 +1,13 @@
 package com.ecommerce.api.TransferMoney.Controller;
 
 import com.ecommerce.api.Entity.Beneficiary;
-import com.ecommerce.api.Entity.Otp;
+import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Entity.User;
-import com.ecommerce.api.Repository.OtpRepository;
+import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.TransferMoney.Response.BeneficiaryResponseDTO;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
-import com.ecommerce.api.TransferMoney.dto.TransfertDto;
-import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,10 +24,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/auth/")
 public class modifyUser {
+
     @Autowired
     private TransferService transferService;
-    @Autowired
-    private EmailService emailService;
 
     @PostMapping("/modify/{username}")
     public ResponseEntity<String> modifykyc(@PathVariable String username, @RequestBody Kyc kyc) {
@@ -131,5 +128,4 @@ public class modifyUser {
         }
 
     }
-
 }

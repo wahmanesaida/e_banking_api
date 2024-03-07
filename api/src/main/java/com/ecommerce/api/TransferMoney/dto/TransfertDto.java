@@ -25,4 +25,5 @@ public class TransfertDto {
     private Type_transfer typeOftransfer;
     private String status;
     private LocalDateTime createTime;
+    private Long id_bene;
 }

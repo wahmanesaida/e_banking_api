@@ -2,12 +2,11 @@ package com.ecommerce.api.TransferMoney.service;
 
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Entity.Beneficiary;
+import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
-
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Service;
 
@@ -19,6 +18,7 @@ public interface TransferService {
 
     User showKyc(String phone);
 
+    /* Transfert showTransfer(String transferRef); */
 
     String generateTransferReference();
 
