@@ -89,4 +89,14 @@ public class ShowTransfer {
         }
     }
 
+    @PostMapping("/generatePaymentReciept")
+    public void generateReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) {
+        try {
+            servingTransfer.generatePaymentReceipt(transferPaymentDto, response);
+        } catch (IOException | DocumentException e) {
+            e.printStackTrace(); 
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

@@ -20,7 +20,6 @@ public class emailcontroller {
     public String sendMail(@RequestBody MailStructure mailStructure){
         emailService.sendMail(mailStructure);
         return "Successfully sent the mail";
-
     }
 
 

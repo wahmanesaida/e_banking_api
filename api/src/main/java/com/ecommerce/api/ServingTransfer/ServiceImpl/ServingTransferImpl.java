@@ -125,12 +125,24 @@ public class ServingTransferImpl implements ServingTransfer {
 
                 transfert.setStatus("payé");
                 transfertRepository.save(transfert);
-                generatePaymentReceipt(transferPaymentDto,response);
+                //generatePaymentReceipt(transferPaymentDto,response);
             } else {
                 throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
 
         /* else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
+
+                           if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
+
+
+                            //hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha o ydir rechercher sinon
+                            ydir l'inscription 
+
+
+
+                           
+
+                           }
             
         } */
         
