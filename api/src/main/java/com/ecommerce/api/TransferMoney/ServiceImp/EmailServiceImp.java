@@ -6,16 +6,13 @@ import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
