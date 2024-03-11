@@ -1,6 +1,7 @@
 package com.ecommerce.api.TransferMoney.dto;
 
 import com.ecommerce.api.Entity.TypeOfFees;
+import com.ecommerce.api.Entity.TypePieceIdentite;
 import com.ecommerce.api.Entity.Type_transfer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,4 +27,7 @@ public class TransfertDto {
     private String status;
     private LocalDateTime createTime;
     private Long id_bene;
+    private TypePieceIdentite typePieceIdentite;
+    private String numeroPieceIdentite;
+    private long id_agent;
 }

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -180,6 +181,8 @@ public class TransferServiceImp implements TransferService {
                   transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
                   transfert.setStatus("A servir");
                   transfert.setClient(user);
+                  transfert.setBeneficiary(beneficiary);
+                  transfert.setTransferRef(transfertDto.getGenerateRef());
                   transfertRepository.save(transfert);
 
                   processTransaction(user);
@@ -192,13 +195,80 @@ public class TransferServiceImp implements TransferService {
 
 
 
+            }else{
+                return new MessageResponse( "user not found !");
             }
-            return new MessageResponse( "user not found !");
+        } else if (transfertDto.getTypeOftransfer() == Type_transfer.SPECIES) {
+           Optional<User> clientDoneurOptional = userRepo.findByNumeroPieceIdentite(transfertDto.getNumeroPieceIdentite());
+           Optional<User> AgentOptional= userRepo.findAgent(transfertDto.getId_agent());
+           User clientDoneur;
+           User Agent;
+           Beneficiary beneficiary;
+            ExpenseManagement(transfertDto);
+           if(clientDoneurOptional.isPresent()){
+               clientDoneur=clientDoneurOptional.get();
+               if(AgentOptional.isPresent()){
+                   Agent=AgentOptional.get();
+
+                   MessageResponse check_amount= checkAmountOfTransfert(transfertDto, transfertDto.getId_agent());
+                   if(check_amount.getMessage().equals("good Amount of transfert")){
+                       transfertDto.setGenerateRef(generateTransferReference());
+                       beneficiary = selectOrAddBeneficiary(client_id, bene_id, bene);
+                       DebitCreditAccount(transfertDto, Agent, beneficiary);
+                       emailService.sendMail(
+                               MailStructure.builder()
+                                       .subject("Your account is debited")
+                                       .recipient(clientDoneur.getUsername())
+                                       .message(clientDoneur.getName() + " " + "you send money to " + " "
+                                               + beneficiary.getUsername() + " \n" + "your transfer reference : " + "  "
+                                               + transfertDto.getGenerateRef() + " \n" + " "
+                                               + "don't share this with anyone!"
+                                               + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
+                                               + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                       .build());
+
+                       if (transfertDto.isNotification()) {
+                           emailService.sendMail(
+                                   MailStructure.builder()
+                                           .subject("Your account is credited")
+                                           .recipient(beneficiary.getUsername())
+                                           .message(beneficiary.getFirstName() + " " + "you received money from " + " "
+                                                   + clientDoneur.getUsername() + " \n" + "your transfer reference : " + "  "
+                                                   + transfertDto.getGenerateRef() + " \n" + " "
+                                                   + "don't share this with anyone!"
+                                                   + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                           .build());
+
+                       }
+                       Transfert transfert = new Transfert();
+                       transfert.setAmount_transfer(transfertDto.getAmount_transfer());
+                       transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                       transfert.setTypeOfFees(transfertDto.getFees());
+                       transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
+                       transfert.setStatus("A servir");
+                       transfert.setClient(clientDoneur);
+                       transfert.setAgent(Agent);
+                       transfert.setBeneficiary(beneficiary);
+                       transfert.setTransferRef(transfertDto.getGenerateRef());
+                       transfertRepository.save(transfert);
+                       processTransaction(clientDoneur);
+
+                       return new MessageResponse("congratulations, your transaction has been successful with a good amount");
+                   }
+
+               }else {
+                   return new MessageResponse("Agent not found");
+               }
+
+           }else{
+               return new MessageResponse("Client not found");
+           }
+
         } else {
             return new MessageResponse("an error occurred this method for a transfer by account debit!" + " "
                     + transfertDto.getTypeOftransfer());
         }
-
+        return new MessageResponse("process finished");
     }
 
     @Override
@@ -374,6 +444,39 @@ public class TransferServiceImp implements TransferService {
             return null;
         }
         return beneOpt.get();
+    }
+
+    @Override
+    public MessageResponse AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user) {
+        Optional<User> userOptional = userRepo.findById(id_user);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            Beneficiary beneficiary= Beneficiary.builder()
+                    .firstName(beneficiaryDto.getFirstName())
+                    .lastname(beneficiaryDto.getLastname())
+                    .username(beneficiaryDto.getUsername())
+                    .client(user)
+                    .account_amount(new BigDecimal(0))
+                    .build();
+            beneficiaryRepository.save(beneficiary);
+            return new MessageResponse("beneficiary added succesfully with id: "+ beneficiary.getId()) ;
+        }
+        else{
+            return new MessageResponse("An error occured ! user not found");
+        }
+
+
+    }
+
+    @Override
+    public User ShowKycByPieceIdentite(String numeroPieceIdentite) {
+        Optional<User> doneurDordreOptional=userRepo.findByNumeroPieceIdentite(numeroPieceIdentite);
+        if(doneurDordreOptional.isPresent()){
+            return doneurDordreOptional.get();
+        }else{
+            return null;
+        }
+
     }
 
 

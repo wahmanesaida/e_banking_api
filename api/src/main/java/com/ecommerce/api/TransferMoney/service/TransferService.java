@@ -11,6 +11,8 @@ import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public interface TransferService {
@@ -38,6 +40,8 @@ public interface TransferService {
 
     String getEmailForClient(long client_id);
     Beneficiary SelectBene(long id_beneficiary);
+    MessageResponse AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user);
+    User ShowKycByPieceIdentite(String numeroPieceIdentite);
 
 
 }

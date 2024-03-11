@@ -48,6 +48,10 @@ public class Transfert {
     private User client;
 
     @ManyToOne
+    @JoinColumn(name = "AgentId")
+    private User Agent;
+
+    @ManyToOne
     @JoinColumn(name = "beneficiairy_id")
     private Beneficiary beneficiary;  
 

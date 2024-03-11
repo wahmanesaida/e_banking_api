@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+    Optional<User> findByNumeroPieceIdentite(String numeroPieceIdentite);
 
      //now we will update the role of  users 
    @Modifying
@@ -21,5 +22,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u WHERE u.GSM = :phoneNumber")
     Optional<User> findUserByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+
+    @Query("SELECT a FROM User a WHERE a.id = :id_agent AND a.role = com.ecommerce.api.Entity.Role.AGENT")
+    Optional<User> findAgent(@Param("id_agent") long id_agent);
     
 }
