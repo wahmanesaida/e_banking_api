@@ -8,6 +8,7 @@ import com.ecommerce.api.TransferMoney.Response.BeneficiaryResponseDTO;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
+import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -118,7 +120,7 @@ public class modifyUser {
 
     }
 
-    @PostMapping("/selectbene/{id_beneficiary}")
+    @GetMapping("/selectbene/{id_beneficiary}")
     public ResponseEntity<?> SelectBene(@PathVariable long id_beneficiary){
         try {
             Beneficiary beneee=transferService.SelectBene(id_beneficiary);
@@ -127,5 +129,28 @@ public class modifyUser {
             return new ResponseEntity<>(transferService.SelectBene(id_beneficiary), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+    @PostMapping("/addnew_beneficiary")
+    public ResponseEntity<MessageResponse> AddNewBeneficiary(@RequestBody BeneficiaryRequest bene){
+        try{
+            return new ResponseEntity<MessageResponse>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.OK);
+        }catch (Exception e){
+            return new ResponseEntity<MessageResponse>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+    }
+
+    @PostMapping("/showKycBynumeroPieceIdentite")
+    public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody TransfertDto transfertDto){
+        try {
+            User user=transferService.ShowKycByPieceIdentite(transfertDto.getNumeroPieceIdentite());
+            if(user != null){
+                return ResponseEntity.ok(user);
+            }else{
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+        }
     }
 }

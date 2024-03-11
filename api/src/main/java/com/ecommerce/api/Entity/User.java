@@ -56,7 +56,7 @@ public class User implements UserDetails {
     @Column(name = "paysEmission")
     private String paysEmission = "Maroc";
 
-    @Column(name = "numeroPieceIdentite")
+    @Column(name = "numeroPieceIdentite", unique = true)
     private String numeroPieceIdentite;
 
     @Temporal(TemporalType.DATE)
