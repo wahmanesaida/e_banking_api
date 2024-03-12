@@ -81,10 +81,8 @@ public class ShowTransfer {
             servingTransfer.validatePayment(transferPaymentDto, response);
             return ResponseEntity.ok().build();
         } catch (NoSuchElementException | IllegalStateException ex) {
-            // Handle specific exceptions
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
         } catch (Exception ex) {
-            // Handle generic exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
         }
     }
@@ -98,5 +96,6 @@ public class ShowTransfer {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
+
 
 }

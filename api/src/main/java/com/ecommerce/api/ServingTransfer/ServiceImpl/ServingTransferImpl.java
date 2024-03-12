@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.NoSuchElementException;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ecommerce.api.Entity.Beneficiary;
 import com.ecommerce.api.Entity.Transfert;
+import com.ecommerce.api.Entity.Type_transfer;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Repository.BeneficiaryRepository;
 import com.ecommerce.api.Repository.TransfertRepository;
@@ -94,15 +96,18 @@ public class ServingTransferImpl implements ServingTransfer {
     }
 
     @Override
-    public void validatePayment(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws DocumentException, IOException {
+    public void validatePayment(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
+            throws DocumentException, IOException {
         String transferRef = transferPaymentDto.getTransferRefDTO().getTransferRef();
         Optional<Transfert> optionalTransfert = transfertRepository.findByTransferRef(transferRef);
         Optional<User> optionalUser = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-           /*  if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) { */
-               if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
+            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() ==
+             Type_transfer.SPECIES) {
+           
+            if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
 
                 enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
 
@@ -120,35 +125,35 @@ public class ServingTransferImpl implements ServingTransfer {
                     }
                 } else {
                     throw new NoSuchElementException(
-                            "User not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
+                            "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                 }
 
                 transfert.setStatus("payé");
                 transfertRepository.save(transfert);
-                //generatePaymentReceipt(transferPaymentDto,response);
+                // generatePaymentReceipt(transferPaymentDto,response);
             } else {
-                throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
+                throw new NoSuchElementException(
+                        "Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
-
-        /* else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
-
-                           if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
-
-
-                            //hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha o ydir rechercher sinon
-                            ydir l'inscription 
-
-
-
-                           
-
-                           }
+            } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() ==
+             Type_transfer.WALLET) {
+           
+             if (transfert.getStatus().equals("A servir") ||
+           transfert.getStatus().equals("débloqué à servir")) {
+         
+           
+           //hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
+          // o ydir rechercher sinon
+          // ydir l'inscription
+           
+              }
+          
+           }
             
-        } */
-        
-    }else {
-        throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
-    }
+
+        } else {
+            throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
+        }
 
     }
 
