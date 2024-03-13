@@ -49,7 +49,7 @@ public class Transfert {
 
     @ManyToOne
     @JoinColumn(name = "AgentId")
-    private User Agent;
+    private User agent;
 
     @ManyToOne
     @JoinColumn(name = "beneficiairy_id")

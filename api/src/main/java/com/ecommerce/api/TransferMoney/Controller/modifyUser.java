@@ -141,9 +141,9 @@ public class modifyUser {
     }
 
     @PostMapping("/showKycBynumeroPieceIdentite")
-    public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody TransfertDto transfertDto){
+    public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody findAgentRequest request){
         try {
-            User user=transferService.ShowKycByPieceIdentite(transfertDto.getNumeroPieceIdentite());
+            User user=transferService.ShowKycByPieceIdentite(request.numeroPieceIdentite);
             if(user != null){
                 return ResponseEntity.ok(user);
             }else{
