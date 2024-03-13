@@ -49,7 +49,7 @@ public class Transfert {
 
     @ManyToOne
     @JoinColumn(name = "AgentId")
-    private User agent;
+    private User Agent;
 
     @ManyToOne
     @JoinColumn(name = "beneficiairy_id")
@@ -59,5 +59,4 @@ public class Transfert {
     @OneToOne(mappedBy = "transfert")
     @JoinColumn(name = "transfert_id")
     private Transaction transaction;
-
 }
