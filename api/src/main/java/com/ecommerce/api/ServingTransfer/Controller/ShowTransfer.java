@@ -57,7 +57,7 @@ public class ShowTransfer {
     }
 
     @PostMapping("/addKycBeneficiary")
-    public ResponseEntity enterBeneficiaryInformation(@RequestBody BeneficiaryDto beneficiaryDto) {
+    public ResponseEntity<?> enterBeneficiaryInformation(@RequestBody BeneficiaryDto beneficiaryDto) {
         servingTransfer.enterBeneficiaryInformation(beneficiaryDto);
         return ResponseEntity.ok().build();
     }
