@@ -140,7 +140,7 @@ public class modifyUser {
         }
     }
 
-    @PostMapping("/showKycBynumeroPieceIdentite")
+   @PostMapping("/showKycBynumeroPieceIdentite")
     public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody findAgentRequest request){
         try {
             User user=transferService.ShowKycByPieceIdentite(request.numeroPieceIdentite);
