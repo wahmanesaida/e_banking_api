@@ -4,8 +4,11 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -25,6 +28,8 @@ import com.ecommerce.api.ServingTransfer.Dto.BeneficiaryDto;
 import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
 import com.ecommerce.api.ServingTransfer.Dto.TransferRefDTO;
 import com.ecommerce.api.ServingTransfer.Service.ServingTransfer;
+import com.ecommerce.api.TransferMoney.dto.MailStructure;
+import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -54,6 +59,9 @@ public class ServingTransferImpl implements ServingTransfer {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    EmailService emailService;
 
     @Override
     public Transfert searchTransfer(@RequestBody TransferRefDTO transferRefDTO) {
@@ -104,52 +112,70 @@ public class ServingTransferImpl implements ServingTransfer {
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() ==
-             Type_transfer.SPECIES) {
-           
-            if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
+            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
 
-                enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
+                if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
 
-                if (optionalUser.isPresent()) {
-                    User existUser = optionalUser.get();
-                    BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
-                    BigDecimal userAccountAmount = existUser.getAccount_amount();
+                    enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
 
-                    if (userAccountAmount.compareTo(transferAmount) >= 0) {
-                        BigDecimal newAccountAmount = userAccountAmount.subtract(transferAmount);
-                        existUser.setAccount_amount(newAccountAmount);
-                        userRepository.save(existUser);
+                    if (optionalUser.isPresent()) {
+                        User existUser = optionalUser.get();
+                        BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
+                        BigDecimal userAccountAmount = existUser.getAccount_amount();
+
+                        if (userAccountAmount.compareTo(transferAmount) >= 0) {
+                            BigDecimal newAccountAmount = userAccountAmount.subtract(transferAmount);
+                            existUser.setAccount_amount(newAccountAmount);
+                            userRepository.save(existUser);
+                        } else {
+                            throw new IllegalStateException("Insufficient funds for transfer");
+                        }
                     } else {
-                        throw new IllegalStateException("Insufficient funds for transfer");
+                        throw new NoSuchElementException(
+                                "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }
+
+                    transfert.setStatus("payé");
+                    transfertRepository.save(transfert);
+                    emailService.sendMail(
+                            MailStructure.builder()
+                                    .subject("Successful Completion of Transfer Service")
+                                    .recipient(transfert.getClient().getUsername())
+                                    .message("Your transfer has been successfully served")
+                                    .build());
+
+                    /*
+                     * if (transfertDto.isNotification()) {
+                     * emailService.sendMail(
+                     * MailStructure.builder()
+                     * .subject("Your account is credited")
+                     * .recipient(beneficiary.getUsername())
+                     * .message(beneficiary.getFirstName() + " " + "you received money from " + " "
+                     * + user.getUsername() + " \n" + "your transfer reference : " + "  "
+                     * + transfertDto.getGenerateRef() + " \n" + " "
+                     * + "don't share this with anyone!"
+                     * + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                     * .build());
+                     * 
+                     * }
+                     */
+                    // generatePaymentReceipt(transferPaymentDto,response);
                 } else {
                     throw new NoSuchElementException(
-                            "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
+                            "Transfer is already paid or blocked for transfer reference: " + transferRef);
+                }
+            } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
+
+                if (transfert.getStatus().equals("A servir") ||
+                        transfert.getStatus().equals("débloqué à servir")) {
+
+                    // hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
+                    // o ydir rechercher sinon
+                    // ydir l'inscription
+
                 }
 
-                transfert.setStatus("payé");
-                transfertRepository.save(transfert);
-                // generatePaymentReceipt(transferPaymentDto,response);
-            } else {
-                throw new NoSuchElementException(
-                        "Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
-            } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() ==
-             Type_transfer.WALLET) {
-           
-             if (transfert.getStatus().equals("A servir") ||
-           transfert.getStatus().equals("débloqué à servir")) {
-         
-           
-           //hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
-          // o ydir rechercher sinon
-          // ydir l'inscription
-           
-              }
-          
-           }
-            
 
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
@@ -160,7 +186,7 @@ public class ServingTransferImpl implements ServingTransfer {
     @Override
     public void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
             throws IOException, DocumentException {
-        Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdClient());
+        Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
         Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository
                 .findById(transferPaymentDto.getBeneficiaryDto().getId());
         Optional<Transfert> transferOptional = transfertRepository
@@ -249,6 +275,58 @@ public class ServingTransferImpl implements ServingTransfer {
         cell2.setPadding(5); // Set cell padding to 5
         table.addCell(cell1);
         table.addCell(cell2);
+    }
+
+    @Override
+    public void reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
+            throws DocumentException, IOException {
+        String transferRef = transferPaymentDto.getTransferRefDTO().getTransferRef();
+        Optional<Transfert> optionalTransfert = transfertRepository.findByTransferRef(transferRef);
+        Optional<User> optionalUser = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
+
+        if (optionalTransfert.isPresent()) {
+            Transfert transfert = optionalTransfert.get();
+            if (transfert.getStatus().equals("A servir")) {
+                if (isSameDay(transfert.getCreateTime(), new Date())) {
+                    transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
+                    if (optionalUser.isPresent()) {
+                        User existUser = optionalUser.get();
+                        BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
+                        BigDecimal userAccountAmount = existUser.getAccount_amount();
+                    
+                        BigDecimal newAccountAmount = userAccountAmount.add(transferAmount);
+                        existUser.setAccount_amount(newAccountAmount);
+                        userRepository.save(existUser);
+                    } else {
+                        throw new NoSuchElementException(
+                                "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
+                    }
+                    
+                    transfert.setStatus("Extourné");
+                    transfertRepository.save(transfert);
+
+                }else{
+                    throw new NoSuchElementException("The transfer is not initiated on the same day and by the same agent");
+                }
+
+
+            }else{
+                throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
+            }
+
+        } else {
+            throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
+        }
+
+    }
+
+    @Override
+    public boolean isSameDay(LocalDateTime date1, Date date2) {
+        Instant instant = date2.toInstant();
+        ZoneId zoneId = ZoneId.systemDefault();
+        LocalDate localDate = instant.atZone(zoneId).toLocalDate();
+
+        return date1.toLocalDate().equals(localDate);
     }
 
 }
