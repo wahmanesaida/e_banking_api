@@ -36,6 +36,9 @@ public class Transfert {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "motif")
+    private String motif;
+
     @CreationTimestamp
     @Column(name = "createTime")
     private LocalDateTime createTime;
@@ -49,7 +52,7 @@ public class Transfert {
 
     @ManyToOne
     @JoinColumn(name = "AgentId")
-    private User Agent;
+    private User agent;
 
     @ManyToOne
     @JoinColumn(name = "beneficiairy_id")

@@ -22,6 +22,8 @@ public class TransferRefDTO {
 
     private String transferRef;
 
+    private String motif;
+
     private BigDecimal amount_transfer;
 
     private Type_transfer typeOftransfer;
