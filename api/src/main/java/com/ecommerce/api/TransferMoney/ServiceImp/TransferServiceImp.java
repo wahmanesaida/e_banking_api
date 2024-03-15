@@ -199,14 +199,13 @@ public class TransferServiceImp implements TransferService {
                 return new MessageResponse( "user not found !");
             }
         } else if (transfertDto.getTypeOftransfer() == Type_transfer.SPECIES) {
-           Optional<User> clientDoneurOptional = userRepo.findByNumeroPieceIdentite(transfertDto.getNumeroPieceIdentite());
+           Optional<User> clientDoneurOptional = userRepo.findById(client_id);
            Optional<User> AgentOptional= userRepo.findAgent(transfertDto.getId_agent());
-           User clientDoneur;
            User Agent;
            Beneficiary beneficiary;
             ExpenseManagement(transfertDto);
            if(clientDoneurOptional.isPresent()){
-               clientDoneur=clientDoneurOptional.get();
+              User clientDoneur=clientDoneurOptional.get();
                if(AgentOptional.isPresent()){
                    Agent=AgentOptional.get();
 
@@ -224,7 +223,8 @@ public class TransferServiceImp implements TransferService {
                                                + transfertDto.getGenerateRef() + " \n" + " "
                                                + "don't share this with anyone!"
                                                + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
-                                               + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                               + " " + "your transfer amount: " + transfertDto.getAmount_transfer()
+                                       +"Aggent est :  "+ Agent.getId()+ "Client  "+ clientDoneur.getId())
                                        .build());
 
                        if (transfertDto.isNotification()) {
@@ -447,7 +447,7 @@ public class TransferServiceImp implements TransferService {
     }
 
     @Override
-    public MessageResponse AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user) {
+    public Beneficiary AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user) {
         Optional<User> userOptional = userRepo.findById(id_user);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
@@ -459,10 +459,10 @@ public class TransferServiceImp implements TransferService {
                     .account_amount(new BigDecimal(0))
                     .build();
             beneficiaryRepository.save(beneficiary);
-            return new MessageResponse("beneficiary added succesfully with id: "+ beneficiary.getId()) ;
+            return beneficiary;
         }
         else{
-            return new MessageResponse("An error occured ! user not found");
+            return null;
         }
 
 
