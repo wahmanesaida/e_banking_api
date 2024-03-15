@@ -131,11 +131,11 @@ public class modifyUser {
 
     }
     @PostMapping("/addnew_beneficiary")
-    public ResponseEntity<MessageResponse> AddNewBeneficiary(@RequestBody BeneficiaryRequest bene){
+    public ResponseEntity<Beneficiary> AddNewBeneficiary(@RequestBody BeneficiaryRequest bene){
         try{
-            return new ResponseEntity<MessageResponse>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.OK);
+            return new ResponseEntity<Beneficiary>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.OK);
         }catch (Exception e){
-            return new ResponseEntity<MessageResponse>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<Beneficiary>(transferService.AddBeneficiary(bene.getBeneficiaryDto(), bene.getId_user()), HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
     }
