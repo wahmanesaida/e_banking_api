@@ -42,6 +42,10 @@ public interface TransferService {
     Beneficiary SelectBene(long id_beneficiary);
     Beneficiary AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user);
     User ShowKycByPieceIdentite(String numeroPieceIdentite);
+    String generateCodePin();
+    void saveCodePin(String code, String username, Transfert transfert);
+    MessageResponse deleteCodePin(String username, long transfer_id);
+
 
 
 }
