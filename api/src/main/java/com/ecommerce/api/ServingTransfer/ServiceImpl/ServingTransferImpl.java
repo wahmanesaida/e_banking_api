@@ -13,14 +13,11 @@ import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.ecommerce.api.Entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ecommerce.api.Entity.Beneficiary;
-import com.ecommerce.api.Entity.Transfert;
-import com.ecommerce.api.Entity.Type_transfer;
-import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Repository.BeneficiaryRepository;
 import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.Repository.UserRepository;
@@ -114,7 +111,7 @@ public class ServingTransferImpl implements ServingTransfer {
             Transfert transfert = optionalTransfert.get();
             if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
 
-                if (transfert.getStatus().equals("A servir") || transfert.getStatus().equals("débloqué à servir")) {
+                if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué)) {
 
                     enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
 
@@ -135,7 +132,7 @@ public class ServingTransferImpl implements ServingTransfer {
                                 "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }
 
-                    transfert.setStatus("payé");
+                    transfert.setStatus(TransferStatus.Payé);
                     transfertRepository.save(transfert);
                     emailService.sendMail(
                             MailStructure.builder()
@@ -166,8 +163,8 @@ public class ServingTransferImpl implements ServingTransfer {
                 }
             } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
 
-                if (transfert.getStatus().equals("A servir") ||
-                        transfert.getStatus().equals("débloqué à servir")) {
+                if (transfert.getStatus().equals(TransferStatus.A_servir) ||
+                        transfert.getStatus().equals(TransferStatus.Débloqué)) {
 
                     // hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
                     // o ydir rechercher sinon
@@ -249,14 +246,14 @@ public class ServingTransferImpl implements ServingTransfer {
                 " " + client.getName(), font);
         addTableCell(table, "Amount", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
-        addTableCell(table, "State", transfert.getStatus(), font);
+        addTableCell(table, "State", String.valueOf(transfert.getStatus()), font);
 
         addTableCell(table2, "Transfer ID", String.valueOf(transfert.getId()), font);
         addTableCell(table2, "Receiver", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
                 font);
         addTableCell(table2, "Amount", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
-        addTableCell(table2, "State", transfert.getStatus(), font);
+        addTableCell(table2, "State", String.valueOf(transfert.getStatus()), font);
 
         document.add(table);
         document.add(table2);
@@ -286,7 +283,7 @@ public class ServingTransferImpl implements ServingTransfer {
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-            if (transfert.getStatus().equals("A servir")) {
+            if (transfert.getStatus().equals(TransferStatus.A_servir)) {
                 if (isSameDay(transfert.getCreateTime(), new Date())) {
                     transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
                     if (optionalUser.isPresent()) {
@@ -302,7 +299,7 @@ public class ServingTransferImpl implements ServingTransfer {
                                 "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }
                     
-                    transfert.setStatus("Extourné");
+                    transfert.setStatus(TransferStatus.Extourné);
                     transfertRepository.save(transfert);
 
                 }else{

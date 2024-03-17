@@ -153,4 +153,15 @@ public class modifyUser {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
         }
     }
+
+    @PostMapping("/deleteCodePin")
+    public ResponseEntity<MessageResponse> deleteCodePin(@RequestBody DeleteCodeRequest request){
+        try {
+            return ResponseEntity.ok(transferService.deleteCodePin(request.username, request.id));
+
+        }catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse(ex.getMessage()));
+
+        }
+    }
 }
