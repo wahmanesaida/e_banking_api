@@ -40,8 +40,12 @@ public interface TransferService {
 
     String getEmailForClient(long client_id);
     Beneficiary SelectBene(long id_beneficiary);
-    MessageResponse AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user);
+    Beneficiary AddBeneficiary(BeneficiaryDto beneficiaryDto, long id_user);
     User ShowKycByPieceIdentite(String numeroPieceIdentite);
+    String generateCodePin();
+    void saveCodePin(String code, String username, Transfert transfert);
+    MessageResponse deleteCodePin(String username, long transfer_id);
+
 
 
 }

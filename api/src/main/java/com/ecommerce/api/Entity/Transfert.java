@@ -33,8 +33,9 @@ public class Transfert {
     @Column(name = "amountOfFees")
     private BigDecimal amountOfFees;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private TransferStatus status;
 
     @Column(name = "motif")
     private String motif;
