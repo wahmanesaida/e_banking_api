@@ -97,6 +97,17 @@ public class ShowTransfer {
         }
     }
 
+
+    @PostMapping("/generateExtourneReceipt")
+    public void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) {
+        try {
+            servingTransfer.generateExtourneReceipt(transferPaymentDto, response);
+        } catch (IOException | DocumentException e) {
+            e.printStackTrace(); 
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/reverseTransfer")
     public ResponseEntity<?> reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto,
             HttpServletResponse response) {
@@ -109,6 +120,9 @@ public class ShowTransfer {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
         }
     }
+
+
+
 
     
 

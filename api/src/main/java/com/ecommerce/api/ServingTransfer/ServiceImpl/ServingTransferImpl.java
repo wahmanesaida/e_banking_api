@@ -218,7 +218,7 @@ public class ServingTransferImpl implements ServingTransfer {
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
 
-        Paragraph title = new Paragraph("Receipt of the Payment", fontTitle);
+        Paragraph title = new Paragraph("Le reçu de paiement", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 
@@ -244,23 +244,101 @@ public class ServingTransferImpl implements ServingTransfer {
         table2.setSpacingBefore(20f);
         table2.setSpacingAfter(30f);
 
-        addTableCell(table, "Transfer ID", String.valueOf(transfert.getId()), font);
-        addTableCell(table, "Sender",
+        addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table, "Expéditeur",
                 " " + client.getName(), font);
-        addTableCell(table, "Amount", String.valueOf(transfert.getAmount_transfer()), font);
-        addTableCell(table, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
-        addTableCell(table, "State", transfert.getStatus(), font);
+        addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table, "État", transfert.getStatus(), font);
 
-        addTableCell(table2, "Transfer ID", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Receiver", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
+        addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
                 font);
-        addTableCell(table2, "Amount", String.valueOf(transfert.getAmount_transfer()), font);
-        addTableCell(table2, "Issue Date", String.valueOf(transfert.getCreateTime()), font);
-        addTableCell(table2, "State", transfert.getStatus(), font);
+        addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table2, "État", transfert.getStatus(), font);
 
         document.add(table);
         document.add(table2);
+        document.close();
 
+    }
+
+    @Override
+    public void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto,HttpServletResponse response) throws IOException, DocumentException {
+        Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
+        Optional<Transfert> transferOptional = transfertRepository
+                .findById(transferPaymentDto.getTransferRefDTO().getId());
+
+        User client = clientOptional.get();
+        Transfert transfert = transferOptional.get();
+
+        response.setContentType("application/pdf");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
+        response.setHeader(headerKey, headerValue);
+
+        Rectangle demiPageSize = new Rectangle(PageSize.A4);
+
+        Document document = new Document(demiPageSize);
+        PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
+
+        document.open();
+
+        /*
+         * Image logo = Image.getInstance("");
+         * logo.scaleToFit(100, 100);
+         * document.add(logo);
+         */
+
+        Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
+        fontTitle.setSize(18);
+
+        Paragraph title = new Paragraph("Le reçu de l'extourne du transfert", fontTitle);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        String currentDate = dateFormat.format(date);
+        PdfContentByte canvas = writer.getDirectContent();
+        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
+                document.right() - 10, document.bottom() + 10, 0);
+
+        Font font = FontFactory.getFont(FontFactory.HELVETICA);
+        font.setSize(12);
+
+        document.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(20f);
+        table.setSpacingAfter(30f);
+
+        PdfPTable table2 = new PdfPTable(2);
+        table2.setWidthPercentage(100);
+        table2.setSpacingBefore(20f);
+        table2.setSpacingAfter(30f);
+
+        addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table, "Expéditeur",
+                " " + client.getName(), font);
+        addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table, "État", transfert.getStatus(), font);
+
+        addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
+                font);
+        addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table2, "État", transfert.getStatus(), font);
+
+        document.add(table);
+        document.add(table2);
         document.close();
 
     }
@@ -277,6 +355,8 @@ public class ServingTransferImpl implements ServingTransfer {
         table.addCell(cell2);
     }
 
+    // reversing a Transfer
+
     @Override
     public void reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
             throws DocumentException, IOException {
@@ -287,13 +367,13 @@ public class ServingTransferImpl implements ServingTransfer {
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
             if (transfert.getStatus().equals("A servir")) {
-                if (isSameDay(transfert.getCreateTime(), new Date())) {
+                if (!isSameDay(transfert.getCreateTime(), new Date())) {
                     transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
                     if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
                         BigDecimal userAccountAmount = existUser.getAccount_amount();
-                    
+
                         BigDecimal newAccountAmount = userAccountAmount.add(transferAmount);
                         existUser.setAccount_amount(newAccountAmount);
                         userRepository.save(existUser);
@@ -301,17 +381,18 @@ public class ServingTransferImpl implements ServingTransfer {
                         throw new NoSuchElementException(
                                 "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }
-                    
+
                     transfert.setStatus("Extourné");
                     transfertRepository.save(transfert);
 
-                }else{
-                    throw new NoSuchElementException("The transfer is not initiated on the same day and by the same agent");
+                } else {
+                    throw new NoSuchElementException(
+                            "The transfer is not initiated on the same day and by the same agent");
                 }
 
-
-            }else{
-                throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
+            } else {
+                throw new NoSuchElementException(
+                        "Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
 
         } else {
@@ -321,12 +402,13 @@ public class ServingTransferImpl implements ServingTransfer {
     }
 
     @Override
-    public boolean isSameDay(LocalDateTime date1, Date date2) {
+    public boolean isSameDay(LocalDateTime createTime, Date date2) {
+        // Convert Date to LocalDateTime
         Instant instant = date2.toInstant();
         ZoneId zoneId = ZoneId.systemDefault();
-        LocalDate localDate = instant.atZone(zoneId).toLocalDate();
-
-        return date1.toLocalDate().equals(localDate);
+        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
+        // Check if 24 hours have passed since createTime
+        return createTime.plusHours(24).isBefore(localDateTime);
     }
 
 }
