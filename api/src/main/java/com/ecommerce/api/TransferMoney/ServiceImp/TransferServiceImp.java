@@ -8,8 +8,11 @@ import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import com.ecommerce.api.TransferMoney.utils.TransferUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -144,30 +147,30 @@ public class TransferServiceImp implements TransferService {
 
                     DebitCreditAccount(transfertDto, user, beneficiary);
 
-                    emailService.sendMail(
-                            MailStructure.builder()
-                                    .subject("Your account is debited")
-                                    .recipient(user.getUsername())
-                                    .message(beneficiary.getFirstName() + " " + "you send money to " + " "
-                                            + beneficiary.getUsername() + " \n" + "your transfer reference : " + "  "
-                                            + transfertDto.getGenerateRef() + " \n" + " "
-                                            + "don't share this with anyone!"
-                                            + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
-                                            + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
-                                    .build());
-
-                    if (transfertDto.isNotification()) {
                         emailService.sendMail(
                                 MailStructure.builder()
-                                        .subject("Your account is credited")
-                                        .recipient(beneficiary.getUsername())
-                                        .message(beneficiary.getFirstName() + " " + "you received money from " + " "
-                                                + user.getUsername() + " \n" + "your transfer reference : " + "  "
+                                        .subject("Your account is debited")
+                                        .recipient(user.getUsername())
+                                        .message(beneficiary.getFirstName() + " " + "you send money to " + " "
+                                                + beneficiary.getUsername() + " \n" + "your transfer reference : " + "  "
                                                 + transfertDto.getGenerateRef() + " \n" + " "
-                                                + "your code pin: " + " " + mycode0 + "\n"
                                                 + "don't share this with anyone!"
+                                                + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
                                                 + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
                                         .build());
+
+                        if (transfertDto.isNotification()) {
+                            emailService.sendMail(
+                                    MailStructure.builder()
+                                            .subject("Your account is credited")
+                                            .recipient(beneficiary.getUsername())
+                                            .message(beneficiary.getFirstName() + " " + "you received money from " + " "
+                                                    + user.getUsername() + " \n" + "your transfer reference : " + "  "
+                                                    + transfertDto.getGenerateRef() + " \n" + " "
+                                                    + "your code pin: " + " " + mycode0 + "\n"
+                                                    + "don't share this with anyone!"
+                                                    + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                            .build());
 
                     }
 
@@ -264,6 +267,69 @@ public class TransferServiceImp implements TransferService {
                 return new MessageResponse("Client not found");
             }
 
+        } else if (transfertDto.getTypeOftransfer() == Type_transfer.WALLET) {
+            Optional<User> userOptional = userRepo.findById(client_id);
+            User user;
+            Beneficiary beneficiary;
+            if(userOptional.isEmpty()){
+                return  new MessageResponse("user not found !");
+            }
+            else {
+                user = userOptional.get();
+                beneficiary = selectOrAddBeneficiary(client_id, bene_id, bene);
+                ExpenseManagement(transfertDto);  // gestion des frais
+                MessageResponse check_amount = checkAmountOfTransfert(transfertDto, client_id);
+                if (check_amount.getMessage().equals("good Amount of transfert")) {
+                    transfertDto.setGenerateRef(generateTransferReference());
+                    String codepin = generateCodePin();
+                    DebitCreditAccount(transfertDto, user, beneficiary);
+
+                    emailService.sendMail(
+                            MailStructure.builder()
+                                    .subject("Your account is debited")
+                                    .recipient(user.getUsername())
+                                    .message(beneficiary.getFirstName() + " " + "you send money to " + " "
+                                            + beneficiary.getUsername() + " \n" + "your transfer reference : " + "  "
+                                            + transfertDto.getGenerateRef() + " \n" + " "
+                                            + "don't share this with anyone!"
+                                            + "\n" + "  " + "your total amount is: " + transfertDto.getAmount_total()
+                                            + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                    .build());
+
+                    if (transfertDto.isNotification()) {
+                        emailService.sendMail(
+                                MailStructure.builder()
+                                        .subject("Your account is credited")
+                                        .recipient(beneficiary.getUsername())
+                                        .message(beneficiary.getFirstName() + " " + "you received money from " + " "
+                                                + user.getUsername() + " \n" + "your transfer reference : " + "  "
+                                                + transfertDto.getGenerateRef() + " \n" + " "
+                                                + "your code pin: " + " " + codepin + "\n"
+                                                + "don't share this with anyone!"
+                                                + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                                        .build());
+                    }
+
+                    Transfert transfert = new Transfert();
+                    transfert.setAmount_transfer(transfertDto.getAmount_transfer());
+                    transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                    transfert.setTypeOfFees(transfertDto.getFees());
+                    transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
+                    transfert.setStatus(TransferStatus.A_servir);
+                    transfert.setClient(user);
+                    transfert.setBeneficiary(beneficiary);
+                    transfert.setTransferRef(transfertDto.getGenerateRef());
+                    transfertRepository.save(transfert);
+
+                    processTransaction(user);
+                    saveCodePin(codepin, beneficiary.getUsername(), transfert);
+
+                    return new MessageResponse("congratulations, your transaction has been successful with a good amount");
+                }else{
+                    return new MessageResponse(check_amount.getMessage());
+                }
+            }
+            
         } else {
             return new MessageResponse("an error occurred this method for a transfer by account debit!" + " "
                     + transfertDto.getTypeOftransfer());
@@ -515,8 +581,15 @@ public class TransferServiceImp implements TransferService {
         }
     }
 
+    @Override
+    public List<Beneficiary> getBeneficiariesByClientId(long clientId) {
+        List<Beneficiary> beneficiaries= beneficiaryRepository.findBeneficiariesByClientId(clientId);
+        if(beneficiaries.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No beneficiary found for client with id " + clientId);
 
-
+        }
+        return beneficiaries;
+    }
 
 
 }
