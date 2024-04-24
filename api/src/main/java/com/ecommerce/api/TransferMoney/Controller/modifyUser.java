@@ -146,11 +146,7 @@ public class modifyUser {
     public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody findAgentRequest request){
         try {
             User user=transferService.ShowKycByPieceIdentite(request.numeroPieceIdentite);
-            if(user != null){
-                return ResponseEntity.ok(user);
-            }else{
-                return ResponseEntity.notFound().build();
-            }
+           return new ResponseEntity<>(user, HttpStatus.OK);
         } catch (Exception ex){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
         }
