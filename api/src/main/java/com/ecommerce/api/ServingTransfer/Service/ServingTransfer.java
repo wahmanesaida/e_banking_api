@@ -26,7 +26,6 @@ public interface ServingTransfer {
     void validatePayment(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)throws DocumentException, IOException;
     void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws IOException, DocumentException ;
     void addTableCell(PdfPTable table, String key, String value, Font font);
-    void reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)throws DocumentException, IOException;
     boolean isSameDay(LocalDateTime date1, Date date2) ;
 
 

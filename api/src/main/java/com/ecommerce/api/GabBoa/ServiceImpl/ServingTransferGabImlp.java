@@ -1,30 +1,28 @@
-package com.ecommerce.api.ServingTransfer.ServiceImpl;
+package com.ecommerce.api.GabBoa.ServiceImpl;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import com.ecommerce.api.Entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import com.ecommerce.api.Repository.BeneficiaryRepository;
+import com.ecommerce.api.Entity.CodePin;
+import com.ecommerce.api.Entity.TransferStatus;
+import com.ecommerce.api.Entity.Transfert;
+import com.ecommerce.api.Entity.Type_transfer;
+import com.ecommerce.api.Entity.User;
+import com.ecommerce.api.GabBoa.Dto.TransferRefDTO;
+import com.ecommerce.api.GabBoa.Service.ServingTransferGab;
+import com.ecommerce.api.Repository.CodePinRepository;
 import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.Repository.UserRepository;
-import com.ecommerce.api.ServingTransfer.Dto.BeneficiaryDto;
 import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
-import com.ecommerce.api.ServingTransfer.Dto.TransferRefDTO;
-import com.ecommerce.api.ServingTransfer.Service.ServingTransfer;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.lowagie.text.Chunk;
@@ -46,13 +44,13 @@ import com.lowagie.text.pdf.PdfWriter;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service
-public class ServingTransferImpl implements ServingTransfer {
+public class ServingTransferGabImlp implements ServingTransferGab  {
 
     @Autowired
     private TransfertRepository transfertRepository;
 
     @Autowired
-    private BeneficiaryRepository beneficiaryRepository;
+    private CodePinRepository codePinRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -61,47 +59,31 @@ public class ServingTransferImpl implements ServingTransfer {
     EmailService emailService;
 
     @Override
-    public Transfert searchTransfer(@RequestBody TransferRefDTO transferRefDTO) {
+    public Transfert searchTransferGab(@RequestBody TransferRefDTO transferRefDTO) {
         String transferRef = transferRefDTO.getTransferRef();
+        String pin = transferRefDTO.getCodepin();
+    
         Optional<Transfert> optionalTransfert = transfertRepository.findByTransferRef(transferRef);
         if (optionalTransfert.isPresent()) {
-            return optionalTransfert.get();
-
+            Transfert transfert = optionalTransfert.get();
+            Optional<CodePin> optionalCodePin = codePinRepository.findcodepinbyUsernameTransfer(transfert.getBeneficiary().getUsername(), transfert);
+            if (optionalCodePin.isPresent()) {
+                CodePin codePin = optionalCodePin.get();
+                if (codePin.getCodepin().equals(pin)) {
+                    return transfert;
+                } else {
+                    throw new IllegalStateException("Invalid pin for transfer reference: " + transferRef);
+                }
+            } else {
+                throw new NoSuchElementException("CodePin not found for transfer reference: " + transferRef);
+            }
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
         }
     }
 
     @Override
-    public void enterBeneficiaryInformation(@RequestBody BeneficiaryDto beneficiaryDto) {
-        Optional<Beneficiary> beneficiaryOpt = beneficiaryRepository.findById(beneficiaryDto.getId());
-        if (beneficiaryOpt.isPresent()) {
-            Beneficiary existBeneficiary = beneficiaryOpt.get();
-            existBeneficiary.setTitle(beneficiaryDto.getTitle());
-            existBeneficiary.setPieceIdentite(beneficiaryDto.getPieceIdentite());
-            existBeneficiary.setPaysEmission(beneficiaryDto.getPaysEmission());
-            existBeneficiary.setNumeroPieceIdentite(beneficiaryDto.getNumeroPieceIdentite());
-            Date expirationPieceIdentite = Date
-                    .from(beneficiaryDto.getExpirationPieceIdentite().atStartOfDay(ZoneId.systemDefault()).toInstant());
-            existBeneficiary.setExpirationPieceIdentite(expirationPieceIdentite);
-            Date ValiditePieceIdentite = Date
-                    .from(beneficiaryDto.getExpirationPieceIdentite().atStartOfDay(ZoneId.systemDefault()).toInstant());
-            existBeneficiary.setValiditePieceIdentite(ValiditePieceIdentite);
-            existBeneficiary.setDatenaissance(beneficiaryDto.getDatenaissance());
-            existBeneficiary.setProfession(beneficiaryDto.getProfession());
-            existBeneficiary.setPayeNationale(beneficiaryDto.getPayeNationale());
-            existBeneficiary.setVille(beneficiaryDto.getVille());
-
-            beneficiaryRepository.save(existBeneficiary);
-
-        } else {
-            throw new NoSuchElementException("Beneficiary not found for ID:" + beneficiaryDto.getId());
-        }
-
-    }
-
-    @Override
-    public void validatePayment(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
+     public void validatePaymentGab(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
             throws DocumentException, IOException {
         String transferRef = transferPaymentDto.getTransferRefDTO().getTransferRef();
         Optional<Transfert> optionalTransfert = transfertRepository.findByTransferRef(transferRef);
@@ -111,10 +93,7 @@ public class ServingTransferImpl implements ServingTransfer {
             Transfert transfert = optionalTransfert.get();
             if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
 
-                if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué)) {
-
-                    enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
-
+                if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué_a_servir)) {
                     if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
@@ -141,56 +120,34 @@ public class ServingTransferImpl implements ServingTransfer {
                                     .message("Your transfer has been successfully served")
                                     .build());
 
-                    /*
-                     * if (transfertDto.isNotification()) {
-                     * emailService.sendMail(
-                     * MailStructure.builder()
-                     * .subject("Your account is credited")
-                     * .recipient(beneficiary.getUsername())
-                     * .message(beneficiary.getFirstName() + " " + "you received money from " + " "
-                     * + user.getUsername() + " \n" + "your transfer reference : " + "  "
-                     * + transfertDto.getGenerateRef() + " \n" + " "
-                     * + "don't share this with anyone!"
-                     * + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
-                     * .build());
-                     * 
-                     * }
-                     */
-                    // generatePaymentReceipt(transferPaymentDto,response);
+                   /*  if (transfert.) {
+                        emailService.sendMail(
+                            MailStructure.builder()
+                                    .subject("Successful Completion of Transfer Service")
+                                    .recipient(transfert.getBeneficiary().getUsername())
+                                    .message("Your transfer has been successfully served")
+                                    .build());
+                     
+                    } */
+                     
                 } else {
                     throw new NoSuchElementException(
                             "Transfer is already paid or blocked for transfer reference: " + transferRef);
                 }
-            } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
-
-                if (transfert.getStatus().equals(TransferStatus.A_servir) ||
-                        transfert.getStatus().equals(TransferStatus.Débloqué)) {
-
-                    // hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
-                    // o ydir rechercher sinon
-                    // ydir l'inscription
-
-                }
-
             }
 
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
         }
-
     }
 
     @Override
-    public void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
-            throws IOException, DocumentException {
+    public void generateReceiptGab(@RequestBody TransferPaymentDto transferPaymentDto,HttpServletResponse response) throws IOException, DocumentException {
         Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
-        Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository
-                .findById(transferPaymentDto.getBeneficiaryDto().getId());
         Optional<Transfert> transferOptional = transfertRepository
                 .findById(transferPaymentDto.getTransferRefDTO().getId());
 
         User client = clientOptional.get();
-        Beneficiary beneficiary = beneficiaryOptional.get();
         Transfert transfert = transferOptional.get();
 
         response.setContentType("application/pdf");
@@ -201,7 +158,9 @@ public class ServingTransferImpl implements ServingTransfer {
         String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
 
-        Document document = new Document(PageSize.A4);
+        Rectangle demiPageSize = new Rectangle(PageSize.A4);
+
+        Document document = new Document(demiPageSize);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
 
         document.open();
@@ -215,7 +174,7 @@ public class ServingTransferImpl implements ServingTransfer {
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
 
-        Paragraph title = new Paragraph("Le reçu de paiement", fontTitle);
+        Paragraph title = new Paragraph("Le reçu de paiement du transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
 
@@ -244,20 +203,16 @@ public class ServingTransferImpl implements ServingTransfer {
         addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
         addTableCell(table, "Expéditeur",
                 " " + client.getName(), font);
-
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
 
-
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
+        addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
                 font);
-
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
-
 
         document.add(table);
         document.add(table2);
@@ -275,19 +230,6 @@ public class ServingTransferImpl implements ServingTransfer {
         cell2.setPadding(5); // Set cell padding to 5
         table.addCell(cell1);
         table.addCell(cell2);
-    }
-
-    // reversing a Transfer
-
-    
-    @Override
-    public boolean isSameDay(LocalDateTime createTime, Date date2) {
-        // Convert Date to LocalDateTime
-        Instant instant = date2.toInstant();
-        ZoneId zoneId = ZoneId.systemDefault();
-        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-        // Check if 24 hours have passed since createTime
-        return createTime.plusHours(24).isBefore(localDateTime);
     }
 
 }

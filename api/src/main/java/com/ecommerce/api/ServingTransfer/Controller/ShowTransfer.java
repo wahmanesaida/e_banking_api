@@ -97,18 +97,10 @@ public class ShowTransfer {
         }
     }
 
-    @PostMapping("/reverseTransfer")
-    public ResponseEntity<?> reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto,
-            HttpServletResponse response) {
-        try {
-            servingTransfer.reverseTransfer(transferPaymentDto, response);
-            return ResponseEntity.ok().build();
-        } catch (NoSuchElementException | IllegalStateException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
-        }
-    }
+
+
+
+
 
     
 

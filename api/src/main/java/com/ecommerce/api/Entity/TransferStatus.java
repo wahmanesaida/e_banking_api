@@ -7,6 +7,7 @@ public enum TransferStatus {
     Restitué,
     Bloqué,
     Débloqué,
+    Débloqué_a_servir,
     Déshérence
 
 }
