@@ -257,6 +257,8 @@ public class TransferServiceImp implements TransferService {
                         saveCodePin(mycode, beneficiary.getUsername(), transfert);
 
                         return new MessageResponse("congratulations, your transaction has been successful with a good amount");
+                    }else {
+                        return new MessageResponse("Transfer not allowd " + check_amount.getMessage());
                     }
 
                 } else {
@@ -334,7 +336,6 @@ public class TransferServiceImp implements TransferService {
             return new MessageResponse("an error occurred this method for a transfer by account debit!" + " "
                     + transfertDto.getTypeOftransfer());
         }
-        return new MessageResponse("process finished");
     }
 
     @Override
