@@ -33,6 +33,7 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -91,7 +92,6 @@ public class ServingTransferImpl implements ServingTransfer {
             existBeneficiary.setProfession(beneficiaryDto.getProfession());
             existBeneficiary.setPayeNationale(beneficiaryDto.getPayeNationale());
             existBeneficiary.setVille(beneficiaryDto.getVille());
-
             beneficiaryRepository.save(existBeneficiary);
 
         } else {
@@ -111,35 +111,49 @@ public class ServingTransferImpl implements ServingTransfer {
             Transfert transfert = optionalTransfert.get();
             if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
 
-                if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué)) {
+                if (transfert.getStatus().equals(TransferStatus.A_servir)
+                        || transfert.getStatus().equals(TransferStatus.Débloqué)) {
+                    if (isWithinDeadline(transfert)) {
 
-                    enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
+                        enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
 
-                    if (optionalUser.isPresent()) {
-                        User existUser = optionalUser.get();
-                        BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
-                        BigDecimal userAccountAmount = existUser.getAccount_amount();
+                        if (optionalUser.isPresent()) {
+                            User existUser = optionalUser.get();
+                            BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
+                            BigDecimal userAccountAmount = existUser.getAccount_amount();
 
-                        if (userAccountAmount.compareTo(transferAmount) >= 0) {
-                            BigDecimal newAccountAmount = userAccountAmount.subtract(transferAmount);
-                            existUser.setAccount_amount(newAccountAmount);
-                            userRepository.save(existUser);
+                            if (userAccountAmount.compareTo(transferAmount) >= 0) {
+                                BigDecimal newAccountAmount = userAccountAmount.subtract(transferAmount);
+                                existUser.setAccount_amount(newAccountAmount);
+                                userRepository.save(existUser);
+                                // Add the transfer amount to the beneficiary's account
+                                User beneficiary = userRepository
+                                        .findById(transferPaymentDto.getBeneficiaryDto().getId())
+                                        .orElseThrow(() -> new NoSuchElementException("Beneficiary not found"));
+                                BigDecimal beneficiaryAccountAmount = beneficiary.getAccount_amount();
+                                BigDecimal newBeneficiaryAccountAmount = beneficiaryAccountAmount.add(transferAmount);
+                                beneficiary.setAccount_amount(newBeneficiaryAccountAmount);
+                                userRepository.save(beneficiary);
+                            } else {
+                                throw new IllegalStateException("Insufficient funds for transfer");
+                            }
                         } else {
-                            throw new IllegalStateException("Insufficient funds for transfer");
+                            throw new NoSuchElementException(
+                                    "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                         }
-                    } else {
-                        throw new NoSuchElementException(
-                                "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
-                    }
 
-                    transfert.setStatus(TransferStatus.Payé);
-                    transfertRepository.save(transfert);
-                    emailService.sendMail(
-                            MailStructure.builder()
-                                    .subject("Successful Completion of Transfer Service")
-                                    .recipient(transfert.getClient().getUsername())
-                                    .message("Your transfer has been successfully served")
-                                    .build());
+                        transfert.setStatus(TransferStatus.Payé);
+                        transfertRepository.save(transfert);
+                        emailService.sendMail(
+                                MailStructure.builder()
+                                        .subject("Successful Completion of Transfer Service")
+                                        .recipient(transfert.getClient().getUsername())
+                                        .message("Your transfer has been successfully served")
+                                        .build());
+
+                    } else {
+                        throw new IllegalStateException("Transfer deadline has expired");
+                    }
 
                     /*
                      * if (transfertDto.isNotification()) {
@@ -161,23 +175,20 @@ public class ServingTransferImpl implements ServingTransfer {
                     throw new NoSuchElementException(
                             "Transfer is already paid or blocked for transfer reference: " + transferRef);
                 }
-            } else if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.WALLET) {
-
-                if (transfert.getStatus().equals(TransferStatus.A_servir) ||
-                        transfert.getStatus().equals(TransferStatus.Débloqué)) {
-
-                    // hnaya khasni nzid la fonction dual ila kan l beneficiare endo wallet idirha
-                    // o ydir rechercher sinon
-                    // ydir l'inscription
-
-                }
-
             }
 
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
         }
 
+    }
+
+    @Override
+    public boolean isWithinDeadline(Transfert transfert) {
+        LocalDateTime createTime = transfert.getCreateTime(); // Assuming this returns the creation time of the transfer
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime deadline = createTime.plusWeeks(1);
+        return now.isBefore(deadline);
     }
 
     @Override
@@ -203,14 +214,21 @@ public class ServingTransferImpl implements ServingTransfer {
 
         Document document = new Document(PageSize.A4);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
-
         document.open();
 
-        /*
-         * Image logo = Image.getInstance("");
-         * logo.scaleToFit(100, 100);
-         * document.add(logo);
-         */
+        /* Image logo = Image.getInstance("");
+        logo.scaleToFit(100, 100);
+        document.add(logo); */
+
+        String imagePath = "static/images/icon_bank.png";
+
+        // Load the image
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100); // Scale the image to fit within 100x100
+        logo.scaleAbsolute(100, 80);  // Scale the image to fit within 100x100// Set the image dimensions to 100x80
+
+        // Add the image to the document
+        document.add(logo);
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
@@ -218,14 +236,26 @@ public class ServingTransferImpl implements ServingTransfer {
         Paragraph title = new Paragraph("Le reçu de paiement", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
+        // Add line at the bottom
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
 
+        // Add date in the right corner above the line
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0);
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         Date date = new Date();
         String currentDate = dateFormat.format(date);
         PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
-                document.right() - 10, document.bottom() + 10, 0);
 
+       /*  ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " +
+                currentDate, fontTitle),
+                document.right() - 10, document.bottom() + 10, 0);
+ */
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
         font.setSize(12);
 
@@ -249,7 +279,6 @@ public class ServingTransferImpl implements ServingTransfer {
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
 
-
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
         addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
                 font);
@@ -258,11 +287,9 @@ public class ServingTransferImpl implements ServingTransfer {
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
 
-
         document.add(table);
         document.add(table2);
         document.close();
-
     }
 
     @Override
@@ -279,7 +306,6 @@ public class ServingTransferImpl implements ServingTransfer {
 
     // reversing a Transfer
 
-    
     @Override
     public boolean isSameDay(LocalDateTime createTime, Date date2) {
         // Convert Date to LocalDateTime
