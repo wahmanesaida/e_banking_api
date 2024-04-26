@@ -2,9 +2,8 @@ package com.ecommerce.api.BackOffice.Dto;
 
 import java.time.LocalDateTime;
 
-import com.ecommerce.api.Entity.Type_transfer;
-import com.ecommerce.api.Entity.User;
-
+import com.ecommerce.api.Entity.TransferStatus;
+import com.ecommerce.api.Entity.TypeTransfer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +18,7 @@ public class MulticriteriaSearchDto {
     private String transferRef;
     private Long codeClient;
     private Long codeAgent;
-    private Type_transfer typeTransfer;
-    private String status;
+    private TypeTransfer typeOftransfer;
+    private TransferStatus status;
     private LocalDateTime createTime;
-
 }

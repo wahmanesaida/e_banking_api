@@ -1,6 +1,6 @@
 package com.ecommerce.api.Entity;
 
-public enum Type_transfer {
+public enum TypeTransfer {
     ACCOUNT_DEBIT,
     SPECIES,
     WALLET
