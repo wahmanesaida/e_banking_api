@@ -125,7 +125,7 @@ public class TransferServiceImp implements TransferService {
             return new MessageResponse("transfer dto is null");
         }
 
-        if (transfertDto.getTypeOftransfer() == Type_transfer.ACCOUNT_DEBIT) {
+        if (transfertDto.getTypeOftransfer() == TypeTransfer.ACCOUNT_DEBIT) {
 
 
             Optional<User> userOptional = userRepo.findById(client_id);
@@ -177,7 +177,7 @@ public class TransferServiceImp implements TransferService {
 
                     Transfert transfert = new Transfert();
                     transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                    transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                    transfert.setTypeOftransfer(transfertDto.getTypeOftransfer());
                     transfert.setTypeOfFees(transfertDto.getFees());
                     transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
                     transfert.setStatus(TransferStatus.A_servir);
@@ -198,7 +198,7 @@ public class TransferServiceImp implements TransferService {
             } else {
                 return new MessageResponse("user not found !");
             }
-        } else if (transfertDto.getTypeOftransfer() == Type_transfer.SPECIES) {
+        } else if (transfertDto.getTypeOftransfer() == TypeTransfer.SPECIES) {
             Optional<User> clientDoneurOptional = userRepo.findById(client_id);
             Optional<User> AgentOptional = userRepo.findAgent(transfertDto.getId_agent());
             User Agent;
@@ -244,7 +244,7 @@ public class TransferServiceImp implements TransferService {
                         }
                         Transfert transfert = new Transfert();
                         transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                        transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                        transfert.setTypeOftransfer(transfertDto.getTypeOftransfer());
                         transfert.setTypeOfFees(transfertDto.getFees());
                         transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
                         transfert.setStatus(TransferStatus.A_servir);

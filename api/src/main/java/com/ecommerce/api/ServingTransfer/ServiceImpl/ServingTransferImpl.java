@@ -109,7 +109,7 @@ public class ServingTransferImpl implements ServingTransfer {
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
+            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == TypeTransfer.SPECIES) {
 
                 if (transfert.getStatus().equals(TransferStatus.A_servir)
                         || transfert.getStatus().equals(TransferStatus.Débloqué)) {

@@ -24,7 +24,7 @@ public class Transfert {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "type_transfer")
-    private Type_transfer type_transfer;
+    private TypeTransfer typeOftransfer;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "typeOfFees")
@@ -58,7 +58,6 @@ public class Transfert {
     @ManyToOne
     @JoinColumn(name = "beneficiairy_id")
     private Beneficiary beneficiary;  
-
 
     @OneToOne(mappedBy = "transfert")
     @JoinColumn(name = "transfert_id")
