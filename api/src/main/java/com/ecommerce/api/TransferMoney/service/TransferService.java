@@ -45,6 +45,7 @@ public interface TransferService {
     String generateCodePin();
     void saveCodePin(String code, String username, Transfert transfert);
     MessageResponse deleteCodePin(String username, long transfer_id);
+    List<Beneficiary> getBeneficiariesByClientId(long clientId);
 
 
 
