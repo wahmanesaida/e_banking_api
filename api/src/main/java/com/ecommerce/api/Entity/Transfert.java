@@ -38,7 +38,7 @@ public class Transfert {
     private TransferStatus status;
 
     @Column(name = "motif")
-    private String motif;
+    private Motif motif;
 
     @CreationTimestamp
     @Column(name = "createTime")

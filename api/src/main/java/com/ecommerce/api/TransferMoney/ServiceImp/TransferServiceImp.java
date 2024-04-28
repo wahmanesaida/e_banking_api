@@ -125,27 +125,32 @@ public class TransferServiceImp implements TransferService {
             return new MessageResponse("transfer dto is null");
         }
 
-        if (transfertDto.getTypeOftransfer() == TypeTransfer.ACCOUNT_DEBIT) {
+        if (transfertDto.getTypeOftransfer() == Type_transfer.ACCOUNT_DEBIT) {
 
 
             Optional<User> userOptional = userRepo.findById(client_id);
             Beneficiary beneficiary;
+            Optional<User> AgentOptional = userRepo.findAgent(transfertDto.getId_agent());
+            if(AgentOptional.isEmpty()){
+                return new MessageResponse("Agent not found");
+            }
+            else {
 
 
-            ExpenseManagement(transfertDto);
-            String mycode0 = generateCodePin();
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
+                ExpenseManagement(transfertDto);
+                String mycode0 = generateCodePin();
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
 
 
-                //BigDecimal checkAmount = (transfertDto.getAmount_transfer()).divide(new BigDecimal(100));
-                MessageResponse checkAmountMessage = checkAmountOfTransfert(transfertDto, client_id);
-                if (checkAmountMessage.getMessage().equals("good Amount of transfert")) {
+                    //BigDecimal checkAmount = (transfertDto.getAmount_transfer()).divide(new BigDecimal(100));
+                    MessageResponse checkAmountMessage = checkAmountOfTransfert(transfertDto, client_id);
+                    if (checkAmountMessage.getMessage().equals("good Amount of transfert")) {
 
-                    transfertDto.setGenerateRef(generateTransferReference());
-                    beneficiary = selectOrAddBeneficiary(client_id, bene_id, bene);
+                        transfertDto.setGenerateRef(generateTransferReference());
+                        beneficiary = selectOrAddBeneficiary(client_id, bene_id, bene);
 
-                    DebitCreditAccount(transfertDto, user, beneficiary);
+                        DebitCreditAccount(transfertDto, user, beneficiary);
 
                         emailService.sendMail(
                                 MailStructure.builder()
@@ -172,33 +177,35 @@ public class TransferServiceImp implements TransferService {
                                                     + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
                                             .build());
 
+                        }
+
+
+                        Transfert transfert = new Transfert();
+                        transfert.setAmount_transfer(transfertDto.getAmount_transfer());
+                        transfert.setType_transfer(transfertDto.getTypeOftransfer());
+                        transfert.setTypeOfFees(transfertDto.getFees());
+                        transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
+                        transfert.setStatus(TransferStatus.A_servir);
+                        transfert.setClient(user);
+                        transfert.setBeneficiary(beneficiary);
+                        transfert.setTransferRef(transfertDto.getGenerateRef());
+                        transfert.setAgent(AgentOptional.get());
+                        transfertRepository.save(transfert);
+
+                        processTransaction(user);
+                        saveCodePin(mycode0, beneficiary.getUsername(), transfert);
+
+                        return new MessageResponse("congratulations, your transaction has been successful with a good amount");
+                    } else {
+                        return new MessageResponse("Transfer not allowd " + checkAmountMessage.getMessage());
                     }
 
 
-                    Transfert transfert = new Transfert();
-                    transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                    transfert.setTypeOftransfer(transfertDto.getTypeOftransfer());
-                    transfert.setTypeOfFees(transfertDto.getFees());
-                    transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
-                    transfert.setStatus(TransferStatus.A_servir);
-                    transfert.setClient(user);
-                    transfert.setBeneficiary(beneficiary);
-                    transfert.setTransferRef(transfertDto.getGenerateRef());
-                    transfertRepository.save(transfert);
-
-                    processTransaction(user);
-                    saveCodePin(mycode0, beneficiary.getUsername(), transfert);
-
-                    return new MessageResponse("congratulations, your transaction has been successful with a good amount");
                 } else {
-                    return new MessageResponse("Transfer not allowd " + checkAmountMessage.getMessage());
+                    return new MessageResponse("user not found !");
                 }
-
-
-            } else {
-                return new MessageResponse("user not found !");
-            }
-        } else if (transfertDto.getTypeOftransfer() == TypeTransfer.SPECIES) {
+            }//close de else  celle de l'agent
+        } else if (transfertDto.getTypeOftransfer() == Type_transfer.SPECIES) {
             Optional<User> clientDoneurOptional = userRepo.findById(client_id);
             Optional<User> AgentOptional = userRepo.findAgent(transfertDto.getId_agent());
             User Agent;
@@ -244,7 +251,7 @@ public class TransferServiceImp implements TransferService {
                         }
                         Transfert transfert = new Transfert();
                         transfert.setAmount_transfer(transfertDto.getAmount_transfer());
-                        transfert.setTypeOftransfer(transfertDto.getTypeOftransfer());
+                        transfert.setType_transfer(transfertDto.getTypeOftransfer());
                         transfert.setTypeOfFees(transfertDto.getFees());
                         transfert.setAmountOfFees(transferUtils.getFraiDuTransfert());
                         transfert.setStatus(TransferStatus.A_servir);
