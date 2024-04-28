@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public interface ServingTransferGab {
     Transfert searchTransferGab(@RequestBody TransferRefDTO transferRefDTO) ;
     void validatePaymentGab(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws DocumentException, IOException;
+    public boolean isWithinDeadline(Transfert transfert);
     void generateReceiptGab(@RequestBody TransferPaymentDto transferPaymentDto,HttpServletResponse response) throws IOException, DocumentException;
     void addTableCell(PdfPTable table, String key, String value, Font font);
 }

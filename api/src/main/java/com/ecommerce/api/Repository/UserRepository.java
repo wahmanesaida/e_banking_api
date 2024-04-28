@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT a FROM User a WHERE a.id = :id_agent AND a.role = com.ecommerce.api.Entity.Role.AGENT")
     Optional<User> findAgent(@Param("id_agent") long id_agent);
     
+    @Query("SELECT a FROM User a WHERE a.id = :id_client AND a.role = com.ecommerce.api.Entity.Role.USER")
+    Optional<User> findClient(@Param("id_client") long id_client);
 }

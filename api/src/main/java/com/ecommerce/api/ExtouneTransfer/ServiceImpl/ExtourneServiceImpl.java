@@ -163,13 +163,15 @@ public class ExtourneServiceImpl implements ExtourneService {
                     transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
                     if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
-                        BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
                         BigDecimal userAccountAmount = existUser.getAccount_amount();
-
-                        BigDecimal newAccountAmount = userAccountAmount.add(transferAmount);
+                        BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
+                        BigDecimal transferFees = transferPaymentDto.getTransferRefDTO().getAmountOfFees();
+                    
+                        BigDecimal newAccountAmount = userAccountAmount.add(transferAmount).add(transferFees);
                         existUser.setAccount_amount(newAccountAmount);
                         userRepository.save(existUser);
-                    } else {
+                    }
+                     else {
                         throw new NoSuchElementException(
                                 "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }

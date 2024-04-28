@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -13,18 +14,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.ecommerce.api.Entity.CodePin;
+import com.ecommerce.api.Entity.GabBoa;
 import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
-import com.ecommerce.api.Entity.Type_transfer;
+import com.ecommerce.api.Entity.TypeTransfer;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.GabBoa.Dto.TransferRefDTO;
 import com.ecommerce.api.GabBoa.Service.ServingTransferGab;
 import com.ecommerce.api.Repository.CodePinRepository;
+import com.ecommerce.api.Repository.GabBoaRepository;
 import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.Repository.UserRepository;
 import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
+import com.ecommerce.api.TransferMoney.service.TransferService;
 import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -53,7 +57,13 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
     private CodePinRepository codePinRepository;
 
     @Autowired
+    private TransferService transferService;
+
+    @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private GabBoaRepository gabBoaRepository;
 
     @Autowired
     EmailService emailService;
@@ -83,36 +93,37 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
     }
 
     @Override
-     public void validatePaymentGab(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
+    public void validatePaymentGab(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
             throws DocumentException, IOException {
         String transferRef = transferPaymentDto.getTransferRefDTO().getTransferRef();
         Optional<Transfert> optionalTransfert = transfertRepository.findByTransferRef(transferRef);
-        Optional<User> optionalUser = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
+        Optional<GabBoa> optionalGabBoa = gabBoaRepository.findById(1L);
+        //Optional<User> optionalUser = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
 
-        if (optionalTransfert.isPresent()) {
+        if (optionalTransfert.isPresent() && optionalGabBoa.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
+            GabBoa gabBoa = optionalGabBoa.get();
+            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == TypeTransfer.SPECIES) {
 
                 if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué_a_servir)) {
-                    if (optionalUser.isPresent()) {
-                        User existUser = optionalUser.get();
+                    if (isWithinDeadline(transfert)) {
+                   
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
-                        BigDecimal userAccountAmount = existUser.getAccount_amount();
+                        BigDecimal gabBoaAccountAmount = gabBoa.getBalance();
 
-                        if (userAccountAmount.compareTo(transferAmount) >= 0) {
-                            BigDecimal newAccountAmount = userAccountAmount.subtract(transferAmount);
-                            existUser.setAccount_amount(newAccountAmount);
-                            userRepository.save(existUser);
+                        if (gabBoaAccountAmount.compareTo(transferAmount) >= 0) {
+                            BigDecimal newAccountAmount = gabBoaAccountAmount.subtract(transferAmount);
+                            gabBoa.setBalance(newAccountAmount);
+                            //transfert.getBeneficiary().getAccount_amount().add(transferAmount);
+                            gabBoaRepository.save(gabBoa);
                         } else {
-                            throw new IllegalStateException("Insufficient funds for transfer");
+                            throw new IllegalStateException("Insufficient funds in GabBoa account for transfer");
                         }
-                    } else {
-                        throw new NoSuchElementException(
-                                "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
-                    }
+                    
 
                     transfert.setStatus(TransferStatus.Payé);
                     transfertRepository.save(transfert);
+                    transferService.deleteCodePin(transfert.getBeneficiary().getUsername(), transfert.getId());
                     emailService.sendMail(
                             MailStructure.builder()
                                     .subject("Successful Completion of Transfer Service")
@@ -120,7 +131,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
                                     .message("Your transfer has been successfully served")
                                     .build());
 
-                   /*  if (transfert.) {
+                   /*  if (transfert.isNot) {
                         emailService.sendMail(
                             MailStructure.builder()
                                     .subject("Successful Completion of Transfer Service")
@@ -129,6 +140,11 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
                                     .build());
                      
                     } */
+
+
+                } else {
+                    throw new IllegalStateException("Transfer deadline has expired");
+                }
                      
                 } else {
                     throw new NoSuchElementException(
@@ -139,6 +155,15 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
         }
+    }
+
+    @Override 
+    public boolean isWithinDeadline(Transfert transfert){
+        LocalDateTime createTime = transfert.getCreateTime(); // Assuming this returns the creation time of the transfer
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime deadline = createTime.plusWeeks(1);
+
+        return now.isBefore(deadline);
     }
 
     @Override
@@ -158,7 +183,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
 
-        Rectangle demiPageSize = new Rectangle(PageSize.A4);
+        Rectangle demiPageSize = new Rectangle(PageSize.A2);
 
         Document document = new Document(demiPageSize);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
