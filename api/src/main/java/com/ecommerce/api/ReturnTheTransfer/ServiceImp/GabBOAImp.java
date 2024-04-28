@@ -3,7 +3,6 @@ package com.ecommerce.api.ReturnTheTransfer.ServiceImp;
 import com.ecommerce.api.Entity.Motif;
 import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
-import com.ecommerce.api.Entity.Type_transfer;
 import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.ReturnTheTransfer.DTO.ReturnTransferDTO;
 import com.ecommerce.api.ReturnTheTransfer.Service.GabBOA;

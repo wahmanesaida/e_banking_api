@@ -2,9 +2,9 @@ package com.ecommerce.api.ServingTransfer.Dto;
 
 import java.math.BigDecimal;
 import com.ecommerce.api.Entity.Motif;
-import com.ecommerce.api.Entity.Type_transfer;
 
 
+import com.ecommerce.api.Entity.TypeTransfer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
