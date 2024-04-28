@@ -1,8 +1,9 @@
 package com.ecommerce.api.ServingTransfer.Dto;
 
 import java.math.BigDecimal;
-
+import com.ecommerce.api.Entity.Motif;
 import com.ecommerce.api.Entity.Type_transfer;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,13 +23,13 @@ public class TransferRefDTO {
 
     private String transferRef;
 
-    private String motif;
+    private Motif motif;
 
     private BigDecimal amountOfFees;
 
     private BigDecimal amount_transfer;
 
-    private Type_transfer typeOftransfer;
+    private TypeTransfer typeOftransfer;
     
     private Long idClient;
 

@@ -17,7 +17,7 @@ import com.ecommerce.api.Entity.CodePin;
 import com.ecommerce.api.Entity.GabBoa;
 import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
-import com.ecommerce.api.Entity.Type_transfer;
+import com.ecommerce.api.Entity.TypeTransfer;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.GabBoa.Dto.TransferRefDTO;
 import com.ecommerce.api.GabBoa.Service.ServingTransferGab;
@@ -103,7 +103,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         if (optionalTransfert.isPresent() && optionalGabBoa.isPresent()) {
             Transfert transfert = optionalTransfert.get();
             GabBoa gabBoa = optionalGabBoa.get();
-            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == Type_transfer.SPECIES) {
+            if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == TypeTransfer.SPECIES) {
 
                 if (transfert.getStatus().equals(TransferStatus.A_servir) || transfert.getStatus().equals(TransferStatus.Débloqué_a_servir)) {
                     if (isWithinDeadline(transfert)) {

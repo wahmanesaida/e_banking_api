@@ -2,7 +2,7 @@ package com.ecommerce.api.TransferMoney.dto;
 
 import com.ecommerce.api.Entity.TypeOfFees;
 import com.ecommerce.api.Entity.TypePieceIdentite;
-import com.ecommerce.api.Entity.Type_transfer;
+import com.ecommerce.api.Entity.TypeTransfer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +23,7 @@ public class TransfertDto {
     private String generateRef;
     private TypeOfFees fees;
     private BigDecimal amount_total;
-    private Type_transfer typeOftransfer;
+    private TypeTransfer typeOftransfer;
     private String status;
     private LocalDateTime createTime;
     private Long id_bene;

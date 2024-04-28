@@ -15,6 +15,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import javax.validation.constraints.Pattern;
 
 @Entity
@@ -22,6 +25,7 @@ import javax.validation.constraints.Pattern;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(builderMethodName = "userBuilder")
+@JsonIgnoreProperties(ignoreUnknown = true)
 @Table(name="_user")
 public class User implements UserDetails {
     @Id
@@ -95,28 +99,44 @@ public class User implements UserDetails {
 
 
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
     @Override
+    @JsonIgnore
     public boolean isAccountNonExpired() {
         return true;
     }
     @Override
+    @JsonIgnore
     public boolean isAccountNonLocked() {
         
         return true;
     }
     @Override
+    @JsonIgnore
     public boolean isCredentialsNonExpired() {
         return true;
     }
     @Override
+    @JsonIgnore
     public boolean isEnabled() {
         return true;
     }
+    @JsonIgnore
     public static Object builder() {
         return null;
+    }
+
+    @JsonIgnore
+    public boolean isClient() {
+        return role == Role.USER;
+    }
+
+    @JsonIgnore
+    public boolean isAgent() {
+        return role == Role.AGENT;
     }
 
     
