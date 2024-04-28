@@ -27,7 +27,6 @@ public interface ServingTransfer {
     public boolean isWithinDeadline(Transfert transfert);
     void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws IOException, DocumentException ;
     void addTableCell(PdfPTable table, String key, String value, Font font);
-    boolean isSameDay(LocalDateTime date1, Date date2) ;
 
 
 

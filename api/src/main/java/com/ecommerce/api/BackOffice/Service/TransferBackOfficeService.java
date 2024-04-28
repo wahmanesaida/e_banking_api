@@ -20,5 +20,6 @@ public interface TransferBackOfficeService {
     public List<Transfert> findByTypeTransfer(TypeTransfer type_transfer);
     public List<Transfert> findByStatus(TransferStatus status) ;
     public List<Transfert> findByCreateTime(LocalDateTime createTime);
+    public List<Transfert> getAllTransfers();
 
 }

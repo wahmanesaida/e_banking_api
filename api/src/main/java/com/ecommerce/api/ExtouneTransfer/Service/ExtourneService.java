@@ -20,8 +20,7 @@ public interface ExtourneService {
     void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto,HttpServletResponse response) throws IOException, DocumentException;
     void addTableCell(PdfPTable table, String key, String value, Font font);
     void reverseTransfer(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)throws DocumentException, IOException;
-    boolean isSameDay(LocalDateTime date1, Date date2) ;
-
+    public boolean isSameDay(LocalDateTime date1, Date date2);
 
 
 

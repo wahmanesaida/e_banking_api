@@ -5,10 +5,8 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -112,7 +110,7 @@ public class ServingTransferImpl implements ServingTransfer {
             if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == TypeTransfer.SPECIES) {
 
                 if (transfert.getStatus().equals(TransferStatus.A_servir)
-                        || transfert.getStatus().equals(TransferStatus.Débloqué)) {
+                        || transfert.getStatus().equals(TransferStatus.Débloqué_a_servir)) {
                     if (isWithinDeadline(transfert)) {
 
                         enterBeneficiaryInformation(transferPaymentDto.getBeneficiaryDto());
@@ -185,7 +183,8 @@ public class ServingTransferImpl implements ServingTransfer {
 
     @Override
     public boolean isWithinDeadline(Transfert transfert) {
-        LocalDateTime createTime = transfert.getCreateTime(); // Assuming this returns the creation time of the transfer
+        // Assuming this returns the creation time of the transfer
+        LocalDateTime createTime = transfert.getCreateTime(); 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime deadline = createTime.plusWeeks(1);
         return now.isBefore(deadline);
@@ -216,16 +215,12 @@ public class ServingTransferImpl implements ServingTransfer {
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
         document.open();
 
-        /* Image logo = Image.getInstance("");
-        logo.scaleToFit(100, 100);
-        document.add(logo); */
-
         String imagePath = "static/images/icon_bank.png";
 
         // Load the image
         Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
-        logo.scaleToFit(100, 100); // Scale the image to fit within 100x100
-        logo.scaleAbsolute(100, 80);  // Scale the image to fit within 100x100// Set the image dimensions to 100x80
+        logo.scaleToFit(100, 100); 
+        logo.scaleAbsolute(100, 80);  
 
         // Add the image to the document
         document.add(logo);
@@ -233,9 +228,19 @@ public class ServingTransferImpl implements ServingTransfer {
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
 
-        Paragraph title = new Paragraph("Le reçu de paiement", fontTitle);
+        Font font = FontFactory.getFont(FontFactory.HELVETICA);
+
+        Paragraph title = new Paragraph("Le reçu de paiement du Transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
+        Paragraph para = new Paragraph("Cher client,",font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph("Nous vous remercions d'avoir effectué un transfert bancaire avec notre service. Veuillez trouver ci-dessous les détails de votre transaction :",font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
         // Add line at the bottom
         PdfContentByte line = writer.getDirectContent();
         line.setLineWidth(1f);
@@ -247,16 +252,6 @@ public class ServingTransferImpl implements ServingTransfer {
         ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
                 new Phrase("Date: " + currentDateTime, fontTitle),
                 document.right(), document.bottom() + 15, 0);
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        PdfContentByte canvas = writer.getDirectContent();
-
-       /*  ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " +
-                currentDate, fontTitle),
-                document.right() - 10, document.bottom() + 10, 0);
- */
-        Font font = FontFactory.getFont(FontFactory.HELVETICA);
         font.setSize(12);
 
         document.add(Chunk.NEWLINE);
@@ -272,23 +267,35 @@ public class ServingTransferImpl implements ServingTransfer {
         table2.setSpacingAfter(30f);
 
         addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table, "Expéditeur",
-                " " + client.getName(), font);
+        addTableCell(table, "Expéditeur" ,String.valueOf(client.getName()), font);
 
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),
-                font);
-
+        addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),font);
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table2, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         document.add(table);
         document.add(table2);
+
+        Paragraph paraT = new Paragraph("Nous tenons à vous informer que votre transfert a été payé avec succès. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Votre satisfaction est notre priorité.",font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,",font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer",font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
         document.close();
     }
 
@@ -302,18 +309,6 @@ public class ServingTransferImpl implements ServingTransfer {
         cell2.setPadding(5); // Set cell padding to 5
         table.addCell(cell1);
         table.addCell(cell2);
-    }
-
-    // reversing a Transfer
-
-    @Override
-    public boolean isSameDay(LocalDateTime createTime, Date date2) {
-        // Convert Date to LocalDateTime
-        Instant instant = date2.toInstant();
-        ZoneId zoneId = ZoneId.systemDefault();
-        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-        // Check if 24 hours have passed since createTime
-        return createTime.plusHours(24).isBefore(localDateTime);
     }
 
 }
