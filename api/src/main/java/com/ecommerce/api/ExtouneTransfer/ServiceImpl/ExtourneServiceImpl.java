@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -19,7 +20,6 @@ import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.ExtouneTransfer.Service.ExtourneService;
-import com.ecommerce.api.Repository.BeneficiaryRepository;
 import com.ecommerce.api.Repository.TransfertRepository;
 import com.ecommerce.api.Repository.UserRepository;
 import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
@@ -30,6 +30,7 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -39,15 +40,18 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class ExtourneServiceImpl implements ExtourneService {
 
-
     @Autowired
     private TransfertRepository transfertRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(ExtourneServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -56,7 +60,8 @@ public class ExtourneServiceImpl implements ExtourneService {
     EmailService emailService;
 
     @Override
-    public void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto,HttpServletResponse response) throws IOException, DocumentException {
+    public void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto,
+            HttpServletResponse response) throws IOException, DocumentException {
         Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
         Optional<Transfert> transferOptional = transfertRepository
                 .findById(transferPaymentDto.getTransferRefDTO().getId());
@@ -79,11 +84,15 @@ public class ExtourneServiceImpl implements ExtourneService {
 
         document.open();
 
-        /*
-         * Image logo = Image.getInstance("");
-         * logo.scaleToFit(100, 100);
-         * document.add(logo);
-         */
+        String imagePath = "static/images/icon_bank.png";
+
+        // Load the image
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100);
+        logo.scaleAbsolute(100, 80);
+
+        // Add the image to the document
+        document.add(logo);
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
@@ -91,15 +100,31 @@ public class ExtourneServiceImpl implements ExtourneService {
         Paragraph title = new Paragraph("Le reçu de l'extourne du transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
-                document.right() - 10, document.bottom() + 10, 0);
-
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
+
+        Paragraph para = new Paragraph("Cher client,", font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph(
+                "Nous vous remercions d'avoir utilisé notre service de transfert bancaire. Nous tenons à vous informer qu'une extourne a été effectuée sur votre transfert. Veuillez trouver ci-dessous les détails de la transaction :",
+                font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
+
+        // Add line at the bottom
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
+
+        // Add date in the right corner above the line
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0);
+
         font.setSize(12);
 
         document.add(Chunk.NEWLINE);
@@ -120,20 +145,37 @@ public class ExtourneServiceImpl implements ExtourneService {
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
+        addTableCell(table2, "Bénéficiaire",
+                transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
                 font);
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table2, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         document.add(table);
         document.add(table2);
+
+        Paragraph paraT = new Paragraph(
+                "Nous confirmons que l'agent a bien effectué l'extourne du transfert. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Nous sommes là pour vous aider.",
+                font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,", font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer", font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
         document.close();
 
     }
-
 
     @Override
     public void addTableCell(PdfPTable table, String key, String value, Font font) {
@@ -156,38 +198,33 @@ public class ExtourneServiceImpl implements ExtourneService {
 
         if (optionalTransfert.isPresent()) {
             Transfert transfert = optionalTransfert.get();
-
             if (transfert.getStatus().equals(TransferStatus.A_servir)) {
                 if (isSameDay(transfert.getCreateTime(), new Date())) {
-
-                    transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
-                    if (optionalUser.isPresent()) {
+                    String motifValue = transferPaymentDto.getTransferRefDTO().getMotif();
+                    transfert.setMotif(motifValue);
+                                        if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
-                        BigDecimal userAccountAmount = existUser.getAccount_amount();
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
-                        BigDecimal transferFees = transferPaymentDto.getTransferRefDTO().getAmountOfFees();
-                    
-                        BigDecimal newAccountAmount = userAccountAmount.add(transferAmount).add(transferFees);
+                        BigDecimal userAccountAmount = existUser.getAccount_amount();
+
+                        BigDecimal newAccountAmount = userAccountAmount.add(transferAmount);
                         existUser.setAccount_amount(newAccountAmount);
                         userRepository.save(existUser);
-                    }
-                     else {
+                    } else {
                         throw new NoSuchElementException(
                                 "Agent not found for ID: " + transferPaymentDto.getTransferRefDTO().getIdAgent());
                     }
-                    
-                    transfert.setStatus(TransferStatus.Extourné);
 
+                    transfert.setStatus(TransferStatus.Extourné);
                     transfertRepository.save(transfert);
 
-                } else {
-                    throw new NoSuchElementException(
-                            "The transfer is not initiated on the same day and by the same agent");
+                }else{
+                    throw new NoSuchElementException("The transfer is not initiated on the same day and by the same agent");
                 }
 
-            } else {
-                throw new NoSuchElementException(
-                        "Transfer is already paid or blocked for transfer reference: " + transferRef);
+
+            }else{
+                throw new NoSuchElementException("Transfer is already paid or blocked for transfer reference: " + transferRef);
             }
 
         } else {
@@ -196,16 +233,11 @@ public class ExtourneServiceImpl implements ExtourneService {
 
     }
 
-
     @Override
-    public boolean isSameDay(LocalDateTime createTime, Date date2) {
-        // Convert Date to LocalDateTime
+    public boolean isSameDay(LocalDateTime date1, Date date2) {
         Instant instant = date2.toInstant();
         ZoneId zoneId = ZoneId.systemDefault();
-        LocalDateTime localDateTime = instant.atZone(zoneId).toLocalDateTime();
-        // Check if 24 hours have passed since createTime
-        return createTime.plusHours(24).isBefore(localDateTime);
+        LocalDate localDate = instant.atZone(zoneId).toLocalDate();
+        return date1.toLocalDate().equals(localDate);
     }
-
-
 }

@@ -45,7 +45,7 @@ public class ExcelUtil {
             row.createCell(2).setCellValue(transfer.getTypeOftransfer().toString());
             row.createCell(3).setCellValue(transfer.getAgent().getName());
             row.createCell(4).setCellValue(transfer.getClient().getName());
-            row.createCell(5).setCellValue(transfer.getMotif().ordinal());
+            row.createCell(5).setCellValue(transfer.getMotif().toString());
             row.createCell(6).setCellValue(transfer.getTransferRef());
             row.createCell(7).setCellValue(transfer.getAmountOfFees().toString());
             row.createCell(8).setCellValue(transfer.getTypeOfFees().toString());

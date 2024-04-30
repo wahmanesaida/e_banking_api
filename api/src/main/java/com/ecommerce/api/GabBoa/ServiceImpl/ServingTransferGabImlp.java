@@ -35,6 +35,7 @@ import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
@@ -114,7 +115,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
                         if (gabBoaAccountAmount.compareTo(transferAmount) >= 0) {
                             BigDecimal newAccountAmount = gabBoaAccountAmount.subtract(transferAmount);
                             gabBoa.setBalance(newAccountAmount);
-                            //transfert.getBeneficiary().getAccount_amount().add(transferAmount);
+                            transfert.getBeneficiary().getAccount_amount().add(transferAmount);
                             gabBoaRepository.save(gabBoa);
                         } else {
                             throw new IllegalStateException("Insufficient funds in GabBoa account for transfer");
@@ -159,7 +160,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
 
     @Override 
     public boolean isWithinDeadline(Transfert transfert){
-        LocalDateTime createTime = transfert.getCreateTime(); // Assuming this returns the creation time of the transfer
+        LocalDateTime createTime = transfert.getCreateTime();
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime deadline = createTime.plusWeeks(1);
 
@@ -183,18 +184,24 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
         response.setHeader(headerKey, headerValue);
 
-        Rectangle demiPageSize = new Rectangle(PageSize.A2);
+        Rectangle demiPageSize = new Rectangle(PageSize.A4);
 
         Document document = new Document(demiPageSize);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
 
         document.open();
 
-        /*
-         * Image logo = Image.getInstance("");
-         * logo.scaleToFit(100, 100);
-         * document.add(logo);
-         */
+        String imagePath = "static/images/icon_bank.png";
+
+        // Load the image
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100); 
+        logo.scaleAbsolute(100, 80);  
+
+        // Add the image to the document
+        document.add(logo);
+
+
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
@@ -202,15 +209,30 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         Paragraph title = new Paragraph("Le reçu de paiement du transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
-                document.right() - 10, document.bottom() + 10, 0);
-
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
+
+        Paragraph para = new Paragraph("Cher client,",font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph("Nous vous remercions d'avoir effectué un transfert bancaire avec notre service. Veuillez trouver ci-dessous les détails de votre transaction :",font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
+
+        // Add line at the bottom
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
+
+        // Add date in the right corner above the line
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0); 
+
+
         font.setSize(12);
 
         document.add(Chunk.NEWLINE);
@@ -231,6 +253,7 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
         addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
@@ -238,11 +261,24 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table2, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         document.add(table);
         document.add(table2);
-        document.close();
 
+        Paragraph paraT = new Paragraph("Nous tenons à vous informer que votre transfert a été payé avec succès. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Votre satisfaction est notre priorité.",font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,",font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer",font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
+        document.close();
     }
 
     @Override

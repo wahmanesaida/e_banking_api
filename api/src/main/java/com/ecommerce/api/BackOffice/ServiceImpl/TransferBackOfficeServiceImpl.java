@@ -51,6 +51,11 @@ public class TransferBackOfficeServiceImpl implements TransferBackOfficeService{
         return transfertRepository.findByCreateTime(createTime);
     }
 
+    @Override
+    public List<Transfert> getAllTransfers() {
+        return transfertRepository.findAll();
+    }
+
 
 
   
