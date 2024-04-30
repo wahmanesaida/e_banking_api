@@ -19,5 +19,6 @@ public interface TransfertRepository extends JpaRepository<Transfert, Long> {
     List<Transfert> findByTypeOftransfer(TypeTransfer typeOftransfer);
     List<Transfert> findByStatus(TransferStatus status);
     List<Transfert> findByCreateTime(LocalDateTime createTime);
- 
+    List<Transfert> findAllByClientId(long ClientId);
+
 }
