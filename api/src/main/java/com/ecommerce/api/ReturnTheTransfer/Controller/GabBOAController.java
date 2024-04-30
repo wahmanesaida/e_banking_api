@@ -21,12 +21,8 @@ public class GabBOAController {
     public ResponseEntity<?> GetTransactionByRef(@PathVariable String transferRef){
         try{
             Transfert transfert=gabBOAImp.AccessTheTransactionByRef(transferRef);
-            if(transfert == null){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Transert not found");
-            }
-            else{
-                return ResponseEntity.status(HttpStatus.OK).body(transfert);
-            }
+            return ResponseEntity.status(HttpStatus.OK).body(transfert);
+
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("bad request");
         }

@@ -16,4 +16,5 @@ public class ReturnTransferDTO {
    private Motif motif;
    private long id_agent;
    private boolean notification;
+   private long client_id;
 }
