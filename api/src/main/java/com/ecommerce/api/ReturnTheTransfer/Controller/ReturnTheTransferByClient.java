@@ -44,7 +44,7 @@ public class ReturnTheTransferByClient {
     }
 
     @PostMapping("/generateReturnReceipt")
-    public void generateExtourneReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) {
+    public void generateReturnReceiptByClient(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) {
         try {
             gabBOAImp.generateReturnReceipt(transferPaymentDto, response);
         } catch (IOException | DocumentException e) {
