@@ -6,6 +6,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Optional;
 
+import com.ecommerce.api.Repository.TransfertRepository;
+import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
+import com.lowagie.text.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,16 +21,6 @@ import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import com.ecommerce.api.TransferMoney.service.PdfGeneratorService;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.ColumnText;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
@@ -36,56 +29,86 @@ import com.lowagie.text.pdf.PdfWriter;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Service
 public class PdfGeneratorServiceImpl implements PdfGeneratorService {
 
     @Autowired
-    UserRepository userRepo;
+    UserRepository userRepository;
 
     @Autowired
     BeneficiaryRepository beneficiaryRepository;
 
+    @Autowired
+    TransfertRepository transfertRepository;
+
     @Override
-    public void export(HttpServletResponse response,TransfertDto transfertDto, long client_id, long bene_id, BeneficiaryDto bene) throws IOException, DocumentException {
+    public void generatetransfertReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws IOException, DocumentException {
 
-    Optional<User> clientOptional = userRepo.findById(client_id);
-    Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository.findById(bene_id);
- 
-    if (!clientOptional.isPresent() || !beneficiaryOptional.isPresent()) {
-        // Handle case when client or beneficiary is not found
-        throw new EntityNotFoundException("Client or beneficiary not found");
-    }
+        Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
+        Optional<Transfert> transferOptional = transfertRepository
+                .findById(transferPaymentDto.getTransferRefDTO().getId());
 
-    User client = clientOptional.get();
-    Beneficiary beneficiary = beneficiaryOptional.get();
+        User client = clientOptional.get();
+        Transfert transfert = transferOptional.get();
 
+        response.setContentType("application/pdf");
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
 
+        String headerKey = "Content-Disposition";
+        String headerValue = "attachment; filename=pdf_" + currentDateTime + ".pdf";
+        response.setHeader(headerKey, headerValue);
 
-        Document document = new Document(PageSize.A4);
+        Rectangle demiPageSize = new Rectangle(PageSize.A4);
+
+        Document document = new Document(demiPageSize);
         PdfWriter writer = PdfWriter.getInstance(document, response.getOutputStream());
 
         document.open();
 
-       /*  Image logo = Image.getInstance("");
-        logo.scaleToFit(100, 100); 
-        document.add(logo); */
+        String imagePath = "static/images/icon_bank.png";
+
+        // Load the image
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100);
+        logo.scaleAbsolute(100, 80);
+
+        // Add the image to the document
+        document.add(logo);
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
 
-        Paragraph title = new Paragraph("Receipt of the Transfer", fontTitle);
+        Paragraph title = new Paragraph("Le reçu de réstitution du transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle), document.right() - 10, document.bottom() + 10, 0);
-        
-
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
+
+        Paragraph para = new Paragraph("Cher client,", font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph(
+                "Nous vous remercions d'avoir utilisé notre service de transfert bancaire. Nous tenons à vous informer qu'une réstitution a été effectuée sur votre transfert. Veuillez trouver ci-dessous les détails de la transaction :",
+                font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
+
+        // Add line at the bottom
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
+
+        // Add date in the right corner above the line
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0);
+
         font.setSize(12);
 
         document.add(Chunk.NEWLINE);
@@ -100,25 +123,44 @@ public class PdfGeneratorServiceImpl implements PdfGeneratorService {
         table2.setSpacingBefore(20f);
         table2.setSpacingAfter(30f);
 
-        addTableCell(table, "Transfer ID", String.valueOf(transfertDto.getId()), font);
-        addTableCell(table, "Sender",
+        addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table, "Expéditeur",
                 " " + client.getName(), font);
-        addTableCell(table, "Amount", String.valueOf(transfertDto.getAmount_transfer()), font);
-        addTableCell(table, "Issue Date", String.valueOf(transfertDto.getCreateTime()), font);
-        addTableCell(table, "State", transfertDto.getStatus(), font);
+        addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
-        addTableCell(table2, "Transfer ID", String.valueOf(transfertDto.getId()), font);
-        addTableCell(table2, "Receiver", beneficiary.getFirstName()  + " " + beneficiary.getLastname(),
+        addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table2, "Bénéficiaire",
+                transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
                 font);
-        addTableCell(table2, "Amount", String.valueOf(transfertDto.getAmount_transfer()), font);
-        addTableCell(table2, "Issue Date", String.valueOf(transfertDto.getCreateTime()), font);
-        addTableCell(table2, "State", transfertDto.getStatus(), font);
+        addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table2, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         document.add(table);
         document.add(table2);
 
+        Paragraph paraT = new Paragraph(
+                "Nous confirmons que vous avez  bien effectué la réstitution du transfert. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Nous sommes là pour vous aider.",
+                font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,", font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer", font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
         document.close();
+
     }
+
 
     @Override
     public void addTableCell(PdfPTable table, String key, String value, Font font) {

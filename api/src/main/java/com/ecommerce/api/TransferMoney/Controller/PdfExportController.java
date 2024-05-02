@@ -32,25 +32,6 @@ public class PdfExportController {
 
     TransfertDto transfert;
 
-    @GetMapping("/pdf/generate")
-    public void generatePdf(@RequestParam Long id_client,@RequestParam Long id_bene, @RequestBody BeneficiaryDto bene, HttpServletResponse response) throws IOException{
-        /* Transfert transfert = transfertRepository.findById(id).orElse(null);
-        if (transfert == null) {
-            throw new RuntimeException("Transfert not found");
-        } */
 
-       
-        
-
-        response.setContentType("application/pdf");
-        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String currentDateTime = dateFormatter.format(new Date());
-
-        String headerKey = "Content-Disposition";
-        String headerValue = "attachment; filename=pdf_"+ currentDateTime +".pdf";
-        response.setHeader(headerKey, headerValue);
-
-        pdfGeneratorService.export(response,transfert, id_client,id_bene, bene);
-    }
 
 }

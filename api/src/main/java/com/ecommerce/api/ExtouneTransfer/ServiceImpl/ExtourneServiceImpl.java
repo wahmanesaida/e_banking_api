@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import com.ecommerce.api.Entity.Motif;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -200,8 +201,8 @@ public class ExtourneServiceImpl implements ExtourneService {
             Transfert transfert = optionalTransfert.get();
             if (transfert.getStatus().equals(TransferStatus.A_servir)) {
                 if (isSameDay(transfert.getCreateTime(), new Date())) {
-                    String motifValue = transferPaymentDto.getTransferRefDTO().getMotif();
-                    transfert.setMotif(motifValue);
+                    String motifValue = String.valueOf(transferPaymentDto.getTransferRefDTO().getMotif());
+                    transfert.setMotif(Motif.valueOf(motifValue));
                                         if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();

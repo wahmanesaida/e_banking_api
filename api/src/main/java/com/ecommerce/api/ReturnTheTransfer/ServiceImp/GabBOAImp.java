@@ -148,6 +148,7 @@ public class GabBOAImp implements GabBOA {
 
     @Override
     public void generateReturnReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) throws IOException, DocumentException {
+
         Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
         Optional<Transfert> transferOptional = transfertRepository
                 .findById(transferPaymentDto.getTransferRefDTO().getId());
@@ -170,27 +171,47 @@ public class GabBOAImp implements GabBOA {
 
         document.open();
 
-        /*
-         * Image logo = Image.getInstance("");
-         * logo.scaleToFit(100, 100);
-         * document.add(logo);
-         */
+        String imagePath = "static/images/icon_bank.png";
+
+        // Load the image
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100);
+        logo.scaleAbsolute(100, 80);
+
+        // Add the image to the document
+        document.add(logo);
 
         Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
         fontTitle.setSize(18);
 
-        Paragraph title = new Paragraph("Le reçu de l'extourne du transfert", fontTitle);
+        Paragraph title = new Paragraph("Le reçu de réstitution du transfert", fontTitle);
         title.setAlignment(Element.ALIGN_CENTER);
         document.add(title);
-
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        Date date = new Date();
-        String currentDate = dateFormat.format(date);
-        PdfContentByte canvas = writer.getDirectContent();
-        ColumnText.showTextAligned(canvas, Element.ALIGN_RIGHT, new Phrase("Date: " + currentDate, fontTitle),
-                document.right() - 10, document.bottom() + 10, 0);
-
         Font font = FontFactory.getFont(FontFactory.HELVETICA);
+
+        Paragraph para = new Paragraph("Cher client,", font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph(
+                "Nous vous remercions d'avoir utilisé notre service de transfert bancaire. Nous tenons à vous informer qu'une réstitution a été effectuée sur votre transfert. Veuillez trouver ci-dessous les détails de la transaction :",
+                font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
+
+        // Add line at the bottom
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
+
+        // Add date in the right corner above the line
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0);
+
         font.setSize(12);
 
         document.add(Chunk.NEWLINE);
@@ -211,16 +232,34 @@ public class GabBOAImp implements GabBOA {
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
+        addTableCell(table2, "Bénéficiaire",
+                transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
                 font);
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table2, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         document.add(table);
         document.add(table2);
+
+        Paragraph paraT = new Paragraph(
+                "Nous confirmons que vous avez  bien effectué la réstitution du transfert. Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Nous sommes là pour vous aider.",
+                font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,", font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer", font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
         document.close();
 
     }
