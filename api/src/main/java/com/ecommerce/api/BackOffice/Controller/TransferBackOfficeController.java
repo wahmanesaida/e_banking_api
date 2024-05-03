@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,7 @@ import com.ecommerce.api.BackOffice.Service.TransferBackOfficeService;
 import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Entity.User;
+import com.ecommerce.api.Repository.UserRepository;
 import com.ecommerce.api.TransferMoney.dto.MailStructure;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 import org.slf4j.Logger;
@@ -39,6 +41,7 @@ public class TransferBackOfficeController {
 
     @Autowired
     private EmailService emailService;
+
 
     private static final Logger logger = LoggerFactory.getLogger(TransferBackOfficeController.class);
 
@@ -123,21 +126,26 @@ public class TransferBackOfficeController {
             TransferStatus status = transfert.get().getStatus();
             logger.info("Transfert status: {}", status);
             MailStructure mailStructure = MailStructure.builder()
-            .subject("Your account is debited")
-            .recipient(transfert.get().getClient().getUsername())
-            .message(transfert.get().getClient().getName() + " " + "you send money to " + " "
-                    + transfert.get().getBeneficiary().getUsername() + " \n" + "your transfer reference : " + "  "
-                    + transfert.get().getTransferRef() + " \n" + " "
-                    + "don't share this with anyone!"
-                    + "\n" + "  " + "your total amount is: " + transfert.get().getAmount_transfer()+transfert.get().getAmountOfFees()
-                    + " " + "your transfer amount: " + transfert.get().getAmount_transfer()
-                    + "Aggent est :  " + transfert.get().getAgent().getName() + "Client  " + transfert.get().getClient().getName())
-            .build();
+                    .subject("Your account is debited")
+                    .recipient(transfert.get().getClient().getUsername())
+                    .message(transfert.get().getClient().getName() + " " + "you send money to " + " "
+                            + transfert.get().getBeneficiary().getUsername() + " \n" + "your transfer reference : "
+                            + "  "
+                            + transfert.get().getTransferRef() + " \n" + " "
+                            + "don't share this with anyone!"
+                            + "\n" + "  " + "your total amount is: " + transfert.get().getAmount_transfer()
+                            + transfert.get().getAmountOfFees()
+                            + " " + "your transfer amount: " + transfert.get().getAmount_transfer()
+                            + "Aggent est :  " + transfert.get().getAgent().getName() + "Client  "
+                            + transfert.get().getClient().getName())
+                    .build();
             emailService.sendMail(mailStructure);
         } else {
             throw new NoSuchElementException(
                     "Cannot renvoyer notification for transfers with status other than 'A_servir'");
         }
     }
+
+   
 
 }

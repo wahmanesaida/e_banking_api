@@ -153,21 +153,20 @@ public class ServingTransferImpl implements ServingTransfer {
                         throw new IllegalStateException("Transfer deadline has expired");
                     }
 
-                    /*
-                     * if (transfertDto.isNotification()) {
-                     * emailService.sendMail(
-                     * MailStructure.builder()
-                     * .subject("Your account is credited")
-                     * .recipient(beneficiary.getUsername())
-                     * .message(beneficiary.getFirstName() + " " + "you received money from " + " "
-                     * + user.getUsername() + " \n" + "your transfer reference : " + "  "
-                     * + transfertDto.getGenerateRef() + " \n" + " "
-                     * + "don't share this with anyone!"
-                     * + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
-                     * .build());
-                     * 
-                     * }
-                     */
+                    
+                   /*   if (transfertDto.isNotification()) {
+                       emailService.sendMail(
+                       MailStructure.builder()
+                      .subject("Your account is credited")
+                     .recipient(beneficiary.getUsername())
+                     .message(beneficiary.getFirstName() + " " + "you received money from " + " "
+                     + user.getUsername() + " \n" + "your transfer reference : " + "  "
+                     + transfertDto.getGenerateRef() + " \n" + " "
+                     + "don't share this with anyone!"
+                     + " " + "your transfer amount: " + transfertDto.getAmount_transfer())
+                     .build());
+                     
+                     } */
                     // generatePaymentReceipt(transferPaymentDto,response);
                 } else {
                     throw new NoSuchElementException(

@@ -11,5 +11,4 @@ import lombok.NoArgsConstructor;
 @Builder
 public class RenvoiDto {
     private String transferRef;
-
 }

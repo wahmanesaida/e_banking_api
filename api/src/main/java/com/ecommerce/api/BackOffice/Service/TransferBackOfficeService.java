@@ -21,5 +21,6 @@ public interface TransferBackOfficeService {
     public List<Transfert> findByStatus(TransferStatus status) ;
     public List<Transfert> findByCreateTime(LocalDateTime createTime);
     public List<Transfert> getAllTransfers();
+    public List<User> getAllUsers() ;
 
 }

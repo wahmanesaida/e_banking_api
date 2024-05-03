@@ -7,19 +7,22 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ecommerce.api.BackOffice.Dto.MulticriteriaSearchDto;
 import com.ecommerce.api.BackOffice.Service.TransferBackOfficeService;
 import com.ecommerce.api.Entity.TransferStatus;
 import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Entity.TypeTransfer;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Repository.TransfertRepository;
+import com.ecommerce.api.Repository.UserRepository;
 
 @Service
 public class TransferBackOfficeServiceImpl implements TransferBackOfficeService{
 
     @Autowired
     private TransfertRepository transfertRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public Optional<Transfert> findByTransferRef(String transferRef) {
@@ -54,6 +57,11 @@ public class TransferBackOfficeServiceImpl implements TransferBackOfficeService{
     @Override
     public List<Transfert> getAllTransfers() {
         return transfertRepository.findAll();
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
 
