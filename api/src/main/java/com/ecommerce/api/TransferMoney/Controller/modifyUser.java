@@ -12,6 +12,7 @@ import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -144,11 +146,7 @@ public class modifyUser {
     public ResponseEntity<?> showKycBynumeroPieceIdentite(@RequestBody findAgentRequest request){
         try {
             User user=transferService.ShowKycByPieceIdentite(request.numeroPieceIdentite);
-            if(user != null){
-                return ResponseEntity.ok(user);
-            }else{
-                return ResponseEntity.notFound().build();
-            }
+           return new ResponseEntity<>(user, HttpStatus.OK);
         } catch (Exception ex){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
         }
@@ -163,5 +161,16 @@ public class modifyUser {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new MessageResponse(ex.getMessage()));
 
         }
+    }
+
+    @GetMapping("/listOfBenfficiaries/{ClientId}")
+    public ResponseEntity<?> getListOfBeneficiaries(@PathVariable long ClientId){
+        try {
+            return ResponseEntity.ok(transferService.getBeneficiariesByClientId(ClientId));
+        }catch (Exception ex){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + ex.getMessage());
+
+        }
+
     }
 }
