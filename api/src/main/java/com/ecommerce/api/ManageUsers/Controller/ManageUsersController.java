@@ -19,7 +19,6 @@ import com.ecommerce.api.BackOffice.Service.TransferBackOfficeService;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.ManageUsers.Dto.UserDto;
 import com.ecommerce.api.Repository.UserRepository;
-import com.ecommerce.api.TransferMoney.service.EmailService;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
