@@ -38,6 +38,7 @@ public class Transfert {
     @Column(name = "status")
     private TransferStatus status;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "motif")
     private Motif motif;
 

@@ -201,8 +201,7 @@ public class ExtourneServiceImpl implements ExtourneService {
             Transfert transfert = optionalTransfert.get();
             if (transfert.getStatus().equals(TransferStatus.A_servir)) {
                 if (isSameDay(transfert.getCreateTime(), new Date())) {
-                    String motifValue = String.valueOf(transferPaymentDto.getTransferRefDTO().getMotif());
-                    transfert.setMotif(Motif.valueOf(motifValue));
+                    transfert.setMotif(transferPaymentDto.getTransferRefDTO().getMotif());
                                         if (optionalUser.isPresent()) {
                         User existUser = optionalUser.get();
                         BigDecimal transferAmount = transferPaymentDto.getTransferRefDTO().getAmount_transfer();
