@@ -3,13 +3,21 @@ package com.ecommerce.api.TransferMoney.service;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Entity.Beneficiary;
 import com.ecommerce.api.Entity.Transfert;
+import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Font;
+import com.lowagie.text.pdf.PdfPTable;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +54,9 @@ public interface TransferService {
     void saveCodePin(String code, String username, Transfert transfert);
     MessageResponse deleteCodePin(String username, long transfer_id);
     List<Beneficiary> getBeneficiariesByClientId(long clientId);
+
+    ByteArrayOutputStream generatetransfertReceipt(Transfert transfert, User client, Beneficiary beneficiary) throws IOException;
+
 
 
 

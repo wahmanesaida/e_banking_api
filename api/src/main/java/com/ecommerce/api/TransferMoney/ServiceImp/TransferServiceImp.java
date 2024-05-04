@@ -2,23 +2,36 @@ package com.ecommerce.api.TransferMoney.ServiceImp;
 
 import com.ecommerce.api.Repository.*;
 import com.ecommerce.api.Entity.*;
+import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
 import com.ecommerce.api.TransferMoney.dto.*;
 import com.ecommerce.api.TransferMoney.service.EmailService;
 import com.ecommerce.api.TransferMoney.service.TransferService;
 import com.ecommerce.api.TransferMoney.utils.TransferUtils;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
 
 @Service
 public class TransferServiceImp implements TransferService {
@@ -46,6 +59,12 @@ public class TransferServiceImp implements TransferService {
 
     @Autowired
     CodePinRepository codePinRepository;
+
+    @Autowired
+    PdfGeneratorServiceImpl pdfGeneratorService;
+
+    TransferPaymentDto transferPaymentDto;
+
 
     private static final long EDP_Code = 837;
     private static final Random random = new Random();
@@ -598,6 +617,110 @@ public class TransferServiceImp implements TransferService {
         }
         return beneficiaries;
     }
+
+
+
+
+
+
+    @Override
+    public ByteArrayOutputStream generatetransfertReceipt(Transfert transfert, User client, Beneficiary beneficiary) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        Document document = new Document(PageSize.A4);
+        PdfWriter writer = PdfWriter.getInstance(document, outputStream);
+
+        document.open();
+
+        String imagePath = "static/images/icon_bank.png";
+        Image logo = Image.getInstance(getClass().getClassLoader().getResource(imagePath));
+        logo.scaleToFit(100, 100);
+        logo.scaleAbsolute(100, 80);
+        document.add(logo);
+
+        Font fontTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD);
+        fontTitle.setSize(18);
+
+        Paragraph title = new Paragraph("Le reçu de transfert", fontTitle);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+
+        Font font = FontFactory.getFont(FontFactory.HELVETICA);
+        Paragraph para = new Paragraph("Cher client,", font);
+        para.setAlignment(Element.ALIGN_LEFT);
+        document.add(para);
+        document.add(Chunk.NEWLINE);
+
+        Paragraph paraTwo = new Paragraph(
+                "Nous vous remercions d'avoir utilisé notre service de transfert bancaire. Nous tenons à vous informer que votre transfert a été effectuée avec succès. Veuillez trouver ci-dessous les détails de la transaction :",
+                font);
+        paraTwo.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraTwo);
+
+        PdfContentByte line = writer.getDirectContent();
+        line.setLineWidth(1f);
+        line.moveTo(document.left(), document.bottom() + 10);
+        line.lineTo(document.right(), document.bottom() + 10);
+        line.stroke();
+
+        DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String currentDateTime = dateFormatter.format(new Date());
+        ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_RIGHT,
+                new Phrase("Date: " + currentDateTime, fontTitle),
+                document.right(), document.bottom() + 15, 0);
+
+        font.setSize(12);
+
+        document.add(Chunk.NEWLINE);
+
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingBefore(20f);
+        table.setSpacingAfter(30f);
+
+        addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
+        addTableCell(table, "Expéditeur", " " + client.getName(), font);
+
+        addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
+        addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
+        addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
+        addTableCell(table, "Référence du Transfert", String.valueOf(transfert.getTransferRef()), font);
+        addTableCell(table, "Bénéficiaire",
+                transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),
+                font);
+        addTableCell(table, "Email du bénéficaire", transfert.getBeneficiary().getUsername(), font);
+        addTableCell(table, "GSM", transfert.getBeneficiary().getGSM(), font);
+
+        document.add(table);
+
+        Paragraph paraT = new Paragraph(
+                "Nous confirmons que votre transfert est bien effectué . Si vous avez des questions ou des préoccupations, n'hésitez pas à nous contacter. Nous sommes là pour vous aider.",
+                font);
+        paraT.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraT);
+
+        Paragraph paraV = new Paragraph("Cordialement,", font);
+        paraV.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraV);
+
+        Paragraph paraM = new Paragraph("L'équipe de BankTransfer", font);
+        paraM.setAlignment(Element.ALIGN_LEFT);
+        document.add(paraM);
+
+        document.close();
+        writer.close();
+
+        return outputStream;
+    }
+
+    private void addTableCell(PdfPTable table, String title, String value, Font font) {
+        PdfPCell cell1 = new PdfPCell(new Phrase(title, font));
+        PdfPCell cell2 = new PdfPCell(new Phrase(value, font));
+        table.addCell(cell1);
+        table.addCell(cell2);
+    }
+
+
 
 
 }

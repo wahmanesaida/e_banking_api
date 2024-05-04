@@ -4,21 +4,30 @@ import com.ecommerce.api.Entity.Beneficiary;
 import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.Repository.TransfertRepository;
+import com.ecommerce.api.ReturnTheTransfer.ServiceImp.GabBOAImp;
+import com.ecommerce.api.ServingTransfer.Dto.TransferPaymentDto;
 import com.ecommerce.api.TransferMoney.Response.BeneficiaryResponseDTO;
 import com.ecommerce.api.TransferMoney.Response.MessageResponse;
+import com.ecommerce.api.TransferMoney.Response.TransferResponse;
 import com.ecommerce.api.TransferMoney.dto.BeneficiaryDto;
 import com.ecommerce.api.TransferMoney.dto.Kyc;
 import com.ecommerce.api.TransferMoney.dto.TransfertDto;
 import com.ecommerce.api.TransferMoney.service.TransferService;
+import com.lowagie.text.DocumentException;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.validation.ConstraintViolationException;
 import javax.validation.constraints.Pattern;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -31,6 +40,12 @@ public class modifyUser {
 
     @Autowired
     private TransferService transferService;
+
+    @Autowired
+    private GabBOAImp gabBOAImp;
+
+    @Autowired
+    private  TransfertRepository transfertRepository;
 
     @PostMapping("/modify/{username}")
     public ResponseEntity<String> modifykyc(@PathVariable String username, @RequestBody Kyc kyc) {
@@ -58,19 +73,79 @@ public class modifyUser {
         }
     }
 
+//    @PostMapping("/transfert/{id}")
+//    public ResponseEntity<?> transfertController(@RequestBody TransferRequest request,
+//                                                               @PathVariable long id) {
+//        try {
+//            MessageResponse rp = transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(),
+//                    request.getBene());
+//            if (rp.getMessage().startsWith("congratulations")) {
+//                Optional<Transfert> transfertOptional = transfertRepository.findByTransferRef(request.getTransfertDto().getGenerateRef());
+//                if (transfertOptional.isPresent()) {
+//                    Transfert transfert = transfertOptional.get();
+//                    ByteArrayOutputStream pdfBuffer = transferService.generatetransfertReceipt(transfert, transfert.getClient(), transfert.getBeneficiary());
+//
+//                    // Configurer la réponse HTTP
+//                    HttpHeaders headers = new HttpHeaders();
+//                    headers.setContentType(MediaType.APPLICATION_PDF);
+//                    headers.setContentDispositionFormData("filename", "receipt.pdf");
+//
+//                    // Retourner le PDF en tant que pièce jointe
+//                    return ResponseEntity.ok()
+//                            .headers(headers)
+//                            .contentType(MediaType.APPLICATION_PDF)
+//                            .body(new InputStreamResource(new ByteArrayInputStream(pdfBuffer.toByteArray())));
+//                } else {
+//                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse("Transfert not found"));
+//                }
+//            } else {
+//                return ResponseEntity.status(HttpStatus.OK).body(rp);
+//            }
+//        } catch (IllegalArgumentException e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("error"));
+//        } catch (IOException | DocumentException e) {
+//            // Gérer les erreurs d'E/S ou de génération de document
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(new MessageResponse("An error occurred while generating the transfer receipt"));
+//        }
+//    }
+
     @PostMapping("/transfert/{id}")
-    public ResponseEntity<MessageResponse> transfertController(@RequestBody TransferRequest request,
-            @PathVariable long id) {
+    public ResponseEntity<TransferResponse> transfertController(@RequestBody TransferRequest request,
+                                                                @PathVariable long id) {
         try {
             MessageResponse rp = transferService.trs(request.getTransfertDto(), id, request.getId_beneficiary(),
                     request.getBene());
-            return ResponseEntity.status(HttpStatus.OK).body(rp);
+            if (rp.getMessage().startsWith("congratulations")) {
+                Optional<Transfert> transfertOptional = transfertRepository.findByTransferRef(request.getTransfertDto().getGenerateRef());
+                if (transfertOptional.isPresent()) {
+                    Transfert transfert = transfertOptional.get();
+                    ByteArrayOutputStream pdfBuffer = transferService.generatetransfertReceipt(transfert, transfert.getClient(), transfert.getBeneficiary());
 
+                    TransferResponse transferResponse = new TransferResponse();
+                    transferResponse.setMessage(rp);
+                    transferResponse.setReceiptPdf(pdfBuffer.toByteArray());
+
+                    return ResponseEntity.ok(transferResponse);
+                } else {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new TransferResponse(null, null));
+                }
+            } else {
+                return ResponseEntity.status(HttpStatus.OK).body(new TransferResponse(rp, null));
+            }
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new MessageResponse("error"));
-
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new TransferResponse(new MessageResponse("error"), null));
+        } catch (IOException | DocumentException e) {
+            // Gérer les erreurs d'E/S ou de génération de document
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new TransferResponse(new MessageResponse("An error occurred while generating the transfer receipt"), null));
         }
     }
+
+
+
 
     @PostMapping("/add/{id_user}/{id_beneficiary}")
     public ResponseEntity<?> addBeneficiary(
@@ -172,5 +247,15 @@ public class modifyUser {
 
         }
 
+    }
+
+    @PostMapping("/generateTransferReceiptByAgent")
+    public void generateTransferReceiptByAgent(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response) {
+        try {
+            gabBOAImp.generateReturnReceipt(transferPaymentDto, response);
+        } catch (IOException | DocumentException e) {
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
 }
