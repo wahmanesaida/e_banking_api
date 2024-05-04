@@ -15,5 +15,10 @@ public enum Motif {
     PRÊT,
     COMMERCE_SUR_INTERNET,
     Donation,
-    Autres
+    Autres,
+    Bloqué_après_expiration_du_délai,
+    Bloqué_client_donneur_dordre_soupçons,
+    Bloqué_client_bénéficiaire_soupçons,
+
+
 }
