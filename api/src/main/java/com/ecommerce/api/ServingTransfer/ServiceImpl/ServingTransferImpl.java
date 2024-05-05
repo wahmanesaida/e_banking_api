@@ -167,7 +167,6 @@ public class ServingTransferImpl implements ServingTransfer {
                      .build());
                      
                      } */
-                    // generatePaymentReceipt(transferPaymentDto,response);
                 } else {
                     throw new NoSuchElementException(
                             "Transfer is already paid or blocked for transfer reference: " + transferRef);

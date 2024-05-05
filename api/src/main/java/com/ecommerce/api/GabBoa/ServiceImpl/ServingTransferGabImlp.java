@@ -101,7 +101,8 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
         Optional<GabBoa> optionalGabBoa = gabBoaRepository.findById(1L);
         //Optional<User> optionalUser = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
 
-        if (optionalTransfert.isPresent() && optionalGabBoa.isPresent()) {
+        if (optionalTransfert.isPresent()) {
+            if (optionalGabBoa.isPresent()) {
             Transfert transfert = optionalTransfert.get();
             GabBoa gabBoa = optionalGabBoa.get();
             if (transferPaymentDto.getTransferRefDTO().getTypeOftransfer() == TypeTransfer.SPECIES) {
@@ -152,6 +153,10 @@ public class ServingTransferGabImlp implements ServingTransferGab  {
                             "Transfer is already paid or blocked for transfer reference: " + transferRef);
                 }
             }
+
+        }else{
+            throw new NoSuchElementException("Gab Boa not found !!");
+        }
 
         } else {
             throw new NoSuchElementException("Transfer not found for reference: " + transferRef);
