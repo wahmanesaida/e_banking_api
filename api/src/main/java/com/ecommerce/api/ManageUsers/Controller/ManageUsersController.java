@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ecommerce.api.BackOffice.Controller.TransferBackOfficeController;
 import com.ecommerce.api.BackOffice.Service.TransferBackOfficeService;
 import com.ecommerce.api.Entity.User;
 import com.ecommerce.api.ManageUsers.Dto.UserDto;
@@ -32,6 +35,10 @@ public class ManageUsersController {
 
     @Autowired
     private UserRepository userRepository;
+
+        private static final Logger logger = LoggerFactory.getLogger(TransferBackOfficeController.class);
+
+
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -148,8 +155,21 @@ public class ManageUsersController {
     public ResponseEntity<?> getAdminProfile(@RequestBody long id) {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isPresent()) {
+            User user = optionalUser.get();              
+                return ResponseEntity.ok(user);
+        } else {
+            return ResponseEntity.notFound().build(); 
+        }
+    }
+
+
+   /*  @PostMapping("/adminProfile")
+    public ResponseEntity<?> getAdminProfile(@RequestBody long id) {
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isPresent()) {
             User user = optionalUser.get();
-            if (user.getRole().equals("ADMIN")) {
+            logger.info("this is the role :",user);
+            if (user.getRole().equals("ADMIN") || user.getRole().equals("AGENT") || user.getRole().equals("SYSTEM_MANAGER")) {                
                 return ResponseEntity.ok(user);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("you are unauthorized to access this page");
@@ -157,7 +177,7 @@ public class ManageUsersController {
         } else {
             return ResponseEntity.notFound().build(); 
         }
-    }
+    } */
     
 
 
