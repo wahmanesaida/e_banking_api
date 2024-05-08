@@ -16,5 +16,4 @@ public class AuthenticationResponse {
     private Long id;
     private String name;
     private Role role;
-    
 }
