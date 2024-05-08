@@ -41,20 +41,20 @@ public class ExcelUtil {
         for (Transfert transfer : transfers) {
             Row row = sheet.createRow(rowNum++);
             row.createCell(0).setCellValue(transfer.getId());
-            row.createCell(1).setCellValue(transfer.getAmount_transfer().toString());
-            row.createCell(2).setCellValue(transfer.getTypeOftransfer().toString());
-            row.createCell(3).setCellValue(transfer.getAgent().getName());
-            row.createCell(4).setCellValue(transfer.getClient().getName());
-            row.createCell(5).setCellValue(transfer.getMotif().toString());
+            row.createCell(1).setCellValue(transfer.getAmount_transfer() != null ? transfer.getAmount_transfer().toString() : "");
+            row.createCell(2).setCellValue(transfer.getTypeOftransfer() != null ? transfer.getTypeOftransfer().toString() : "");
+            row.createCell(3).setCellValue(transfer.getAgent() != null ? transfer.getAgent().getName() : "");
+            row.createCell(4).setCellValue(transfer.getClient() != null ? transfer.getClient().getName() : "");
+            row.createCell(5).setCellValue(transfer.getMotif() != null ? transfer.getMotif().toString() : "");
             row.createCell(6).setCellValue(transfer.getTransferRef());
-            row.createCell(7).setCellValue(transfer.getAmountOfFees().toString());
-            row.createCell(8).setCellValue(transfer.getTypeOfFees().toString());
-            row.createCell(9).setCellValue(transfer.getStatus().toString());
+            row.createCell(7).setCellValue(transfer.getAmountOfFees() != null ? transfer.getAmountOfFees().toString() : "");
+            row.createCell(8).setCellValue(transfer.getTypeOfFees() != null ? transfer.getTypeOfFees().toString() : "");
+            row.createCell(9).setCellValue(transfer.getStatus() != null ? transfer.getStatus().toString() : "");
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            String createTimeStr = transfer.getCreateTime().format(formatter);
+            String createTimeStr = transfer.getCreateTime() != null ? transfer.getCreateTime().format(formatter) : "";
             row.createCell(10).setCellValue(createTimeStr);
             row.createCell(11).setCellValue(
-                    transfer.getBeneficiary().getFirstName() + " " + transfer.getBeneficiary().getLastname());
+                    transfer.getBeneficiary() != null ? (transfer.getBeneficiary().getFirstName() + " " + transfer.getBeneficiary().getLastname()) : "");
         }
 
         // Convert the workbook to a byte array

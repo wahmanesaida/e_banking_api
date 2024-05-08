@@ -141,7 +141,7 @@ public class ExtourneServiceImpl implements ExtourneService {
 
         addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
         addTableCell(table, "Expéditeur",
-                " " + client.getName(), font);
+                " " + transfert.getClient().getName(), font);
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table, "État", String.valueOf(transfert.getStatus()), font);
