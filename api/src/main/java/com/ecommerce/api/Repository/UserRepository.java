@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
     Optional<User> findByNumeroPieceIdentite(String numeroPieceIdentite);
+    Optional<User> findByName(String name);
 
      //now we will update the role of  users 
    @Modifying

@@ -56,10 +56,10 @@ public class ManageUsersController {
         userRepository.deleteById(id);
     }
 
-    @PostMapping("/searchUserByID")
-    public User searchUser(@RequestBody Long id) {
-        Optional<User> userOptional = userRepository.findById(id);
-        User user = userOptional.orElseThrow(() -> new IllegalArgumentException("User not found with id: " + id));
+    @PostMapping("/searchUserByName")
+    public User searchUser(@RequestBody String name) {
+        Optional<User> userOptional = userRepository.findByName(name);
+        User user = userOptional.orElseThrow(() -> new IllegalArgumentException("User not found with name: " + name));
         return user;
     }
 
