@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -191,14 +190,13 @@ public class ServingTransferImpl implements ServingTransfer {
     @Override
     public void generatePaymentReceipt(@RequestBody TransferPaymentDto transferPaymentDto, HttpServletResponse response)
             throws IOException, DocumentException {
-        Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
-        Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository
-                .findById(transferPaymentDto.getBeneficiaryDto().getId());
+/*       Optional<User> clientOptional = userRepository.findById(transferPaymentDto.getTransferRefDTO().getIdAgent());
+        Optional<Beneficiary> beneficiaryOptional = beneficiaryRepository.findById(transferPaymentDto.getBeneficiaryDto().getId()); */
         Optional<Transfert> transferOptional = transfertRepository
                 .findById(transferPaymentDto.getTransferRefDTO().getId());
 
-        User client = clientOptional.get();
-        Beneficiary beneficiary = beneficiaryOptional.get();
+      /*   User client = clientOptional.get();
+        Beneficiary beneficiary = beneficiaryOptional.get(); */
         Transfert transfert = transferOptional.get();
 
         response.setContentType("application/pdf");
@@ -265,7 +263,7 @@ public class ServingTransferImpl implements ServingTransfer {
         table2.setSpacingAfter(30f);
 
         addTableCell(table, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table, "Expéditeur" ,String.valueOf(client.getName()), font);
+        addTableCell(table, "Expéditeur" ,String.valueOf(transfert.getClient().getName()), font);
 
         addTableCell(table, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
@@ -273,7 +271,7 @@ public class ServingTransferImpl implements ServingTransfer {
         addTableCell(table, "Réference du Transfert", String.valueOf(transfert.getTransferRef()), font);
 
         addTableCell(table2, "Identifiant du transfert", String.valueOf(transfert.getId()), font);
-        addTableCell(table2, "Bénéficiaire", beneficiary.getFirstName() + " " + beneficiary.getLastname(),font);
+        addTableCell(table2, "Bénéficiaire", transfert.getBeneficiary().getFirstName() + " " + transfert.getBeneficiary().getLastname(),font);
         addTableCell(table2, "Montant du Transfert", String.valueOf(transfert.getAmount_transfer()), font);
         addTableCell(table2, "Date d'émission", String.valueOf(transfert.getCreateTime()), font);
         addTableCell(table2, "État", String.valueOf(transfert.getStatus()), font);
@@ -293,7 +291,6 @@ public class ServingTransferImpl implements ServingTransfer {
         Paragraph paraM = new Paragraph("L'équipe de BankTransfer",font);
         paraM.setAlignment(Element.ALIGN_LEFT);
         document.add(paraM);
-
         document.close();
     }
 
