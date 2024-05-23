@@ -1,5 +1,6 @@
 package com.ecommerce.api.History;
 
+import com.ecommerce.api.Entity.Beneficiary;
 import com.ecommerce.api.Entity.Transfert;
 import com.ecommerce.api.Repository.TransfertRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,4 +12,5 @@ import java.util.List;
 public interface historyService {
 
  List<Transfert> getAllTransferts();
+ List<Beneficiary> getAllBeneficiaries();
 }

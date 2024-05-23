@@ -30,4 +30,13 @@ public class HistoryController {
 
         }
     }
+
+    @GetMapping("/AllBeneficiaries")
+    public ResponseEntity<?> AllBeneficiaries(){
+        try {
+            return ResponseEntity.ok(historyServiceImp.getAllBeneficiaries());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: \" + ex.getMessage()");
+        }
+    }
 }

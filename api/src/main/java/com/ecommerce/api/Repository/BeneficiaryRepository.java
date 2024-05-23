@@ -13,4 +13,6 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, Long> 
     @Query("SELECT b FROM Beneficiary b where b.client.id= :clientId")
     List<Beneficiary> findBeneficiariesByClientId(@Param("clientId") long clientId);
 
+
+
 }
